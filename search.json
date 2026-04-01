@@ -1,0 +1,20 @@
+[
+    {
+        "title": "第一篇随笔",
+        "url": "./writing/post-1.html",
+        "excerpt": "这是我的第一篇技术随笔，分享一些开发心得...",
+        "date": "2024-01-01"
+    },
+    {
+        "title": "前端架构思考",
+        "url": "./writing/frontend-architecture.html",
+        "excerpt": "聊聊现代前端开发中的架构设计...",
+        "date": "2024-01-15"
+    },
+    {
+        "title": "CSS 技巧总结",
+        "url": "./writing/css-tips.html",
+        "excerpt": "一些实用的 CSS 技巧让你的代码更简洁...",
+        "date": "2024-02-01"
+    }
+]
