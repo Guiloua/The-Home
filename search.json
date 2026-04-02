@@ -4,5 +4,11 @@
         "url": "./writing/first-published-note.html",
         "excerpt": "这是一篇示例文章，展示如何使用发布系统从 notes 文件夹发布文章到个人网站",
         "date": "2026-04-02"
+    },
+    {
+        "title": "CSS 技巧总结",
+        "url": "./writing/css-技巧总结.html",
+        "excerpt": "一些实用的 CSS 技巧让你的代码更简洁，布局更优雅",
+        "date": "2026-04-01"
     }
 ]
