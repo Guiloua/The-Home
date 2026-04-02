@@ -12,3 +12,8 @@ Thumbs.db
 # Node modules (if you add any later)
 node_modules/
 npm-debug.log
+
+prompt.markdown
+notes/
+scripts/
+

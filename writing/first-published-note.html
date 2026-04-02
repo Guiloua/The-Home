@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>随笔 | 个人主页</title>
+    <title>我的第一篇发布笔记 | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -19,7 +19,7 @@
 
                 <!-- 导航菜单 -->
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="./index.html" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">随笔</a>
+                    <a href="../writing/index.html" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">随笔</a>
                     <a href="../profile/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">简介</a>
                     <a href="../demo/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">Demo</a>
                 </div>
@@ -56,54 +56,72 @@
         <!-- 移动端菜单 -->
         <div class="md:hidden hidden bg-white border-t border-gray-100" id="mobileMenu">
             <div class="px-4 py-3 space-y-3">
-                <a href="./index.html" class="block text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
+                <a href="../writing/index.html" class="block text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
                 <a href="../profile/" class="block text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
                 <a href="../demo/" class="block text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
             </div>
         </div>
     </nav>
 
-    <!-- 随笔列表 -->
+    <!-- 文章内容 -->
     <main class="pt-24 pb-16 px-4">
-        <div class="max-w-2xl mx-auto fade-in" style="animation-delay: 0.2s">
-            <header class="mb-10">
-                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-3">随笔</h1>
-                <p class="text-gray-500 font-light">分享思考与技术</p>
+        <article class="max-w-2xl mx-auto fade-in" style="animation-delay: 0.2s">
+            <!-- 文章头部 -->
+            <header class="mb-10 text-center">
+                <div class="text-sm text-gray-400 mb-3 font-light">2026-04-02</div>
+                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">我的第一篇发布笔记</h1>
+                <p class="text-gray-500 text-lg font-light">这是一篇示例文章，展示如何使用发布系统从 notes 文件夹发布文章到个人网站</p>
             </header>
 
-            <div class="space-y-6" id="postList">
-                <!-- 随笔列表由 JS 动态生成，或直接在这里写 HTML -->
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="./post-template.html">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">文章标题</h2>
-                            <span class="text-xs text-gray-400">2024-01-01</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">这是文章的简介描述，几句话概括本文内容，让读者快速了解这篇文章讲了什么...</p>
-                    </a>
-                </div>
-
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="#">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">前端架构思考</h2>
-                            <span class="text-xs text-gray-400">2024-01-15</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">聊聊现代前端开发中的架构设计，组件化思想，以及如何维护大型项目...</p>
-                    </a>
-                </div>
-
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="#">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">CSS 技巧总结</h2>
-                            <span class="text-xs text-gray-400">2024-02-01</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">一些实用的 CSS 技巧让你的代码更简洁，布局更优雅...</p>
-                    </a>
-                </div>
+            <!-- 文章正文 -->
+            <div class="article-content text-gray-700 text-base leading-relaxed">
+<h1>这是一级标题</h1>
+<p>这是正文内容。你可以在这里写<strong>粗体</strong>，<em>斜体</em>，或者 <code>行内代码</code>。</p>
+<h2>这是二级标题</h2>
+<p>这里可以写一些内容。列表：</p>
+<ul>
+<li>第一项</li>
+<li>第二项</li>
+<li>第三项</li>
+</ul>
+<p>代码块示例：</p>
+<pre><code class="language-python">def hello_world():
+    print(&quot;Hello, world!&quot;)
+    return True
+</code></pre>
+<blockquote>
+<p>这是一段引用，可以用来强调一些内容。</p>
+</blockquote>
+<p>表格也是支持的：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>项目</td>
+<td>个人网站</td>
+</tr>
+<tr>
+<td>用途</td>
+<td>分享笔记</td>
+</tr>
+</tbody>
+</table>
+<p>继续写更多内容...</p>
             </div>
-        </div>
+
+            <!-- 文章底部 -->
+            <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">
+                <div class="flex items-center justify-between">
+                    <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
+                    <span>#示例 #教程</span>
+                </div>
+            </footer>
+        </article>
     </main>
 
     <script>
@@ -127,114 +145,114 @@
         // 加载搜索索引
         fetch('../search.json')
             .then(response => response.json())
-            .then(data => {
+            .then(data => {{
                 posts = data;
-            })
-            .catch(error => {
+            }})
+            .catch(error => {{
                 console.log('加载搜索索引失败:', error);
-            });
+            }});
 
         // 搜索函数
-        function performSearch(query) {
-            if (!query.trim()) {
+        function performSearch(query) {{
+            if (!query.trim()) {{
                 searchResults.classList.add('hidden');
                 selectedIndex = -1;
                 return;
-            }
+            }}
 
             const lowerQuery = query.toLowerCase();
-            const results = posts.filter(post => {
+            const results = posts.filter(post => {{
                 return post.title.toLowerCase().includes(lowerQuery) ||
                        post.excerpt.toLowerCase().includes(lowerQuery);
-            });
+            }});
 
             displayResults(results, lowerQuery);
             selectedIndex = results.length > 0 ? 0 : -1;
             updateSelection();
-        }
+        }}
 
         // 高亮关键词
-        function highlight(text, query) {
+        function highlight(text, query) {{
             if (!query) return text;
-            const regex = new RegExp(`(${query})`, 'gi');
+            const regex = new RegExp(`(${{query}})`, 'gi');
             return text.replace(regex, '<mark class="bg-yellow-200 rounded px-1">$1</mark>');
-        }
+        }}
 
         // 显示搜索结果
-        function displayResults(results, query) {
-            if (results.length === 0) {
+        function displayResults(results, query) {{
+            if (results.length === 0) {{
                 searchContent.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">未找到相关内容</div>';
                 searchResults.classList.remove('hidden');
                 return;
-            }
+            }}
 
             const html = results.map((post, index) => `
-                <a href="../${post.url}" class="search-result-item block px-4 py-3 border-b border-gray-50 ${index === selectedIndex ? 'active' : ''}">
-                    <div class="font-medium text-gray-800 text-sm mb-1">${highlight(post.title, query)}</div>
-                    <div class="text-xs text-gray-400 mb-1">${post.date}</div>
-                    <div class="text-xs text-gray-500 line-clamp-1">${post.excerpt}</div>
+                <a href="../${{post.url}}" class="search-result-item block px-4 py-3 border-b border-gray-50 ${{index === selectedIndex ? 'active' : ''}}">
+                    <div class="font-medium text-gray-800 text-sm mb-1">${{highlight(post.title, query)}}</div>
+                    <div class="text-xs text-gray-400 mb-1">${{post.date}}</div>
+                    <div class="text-xs text-gray-500 line-clamp-1">${{post.excerpt}}</div>
                 </a>
             `).join('');
 
             searchContent.innerHTML = html;
             searchResults.classList.remove('hidden');
-        }
+        }}
 
         // 更新选中状态
-        function updateSelection() {
-            document.querySelectorAll('.search-result-item').forEach((item, index) => {
-                if (index === selectedIndex) {
+        function updateSelection() {{
+            document.querySelectorAll('.search-result-item').forEach((item, index) => {{
+                if (index === selectedIndex) {{
                     item.classList.add('active');
-                } else {
+                }} else {{
                     item.classList.remove('active');
-                }
-            });
-        }
+                }}
+            }});
+        }}
 
         // 键盘导航
-        searchInput.addEventListener('keydown', (e) => {
+        searchInput.addEventListener('keydown', (e) => {{
             const items = document.querySelectorAll('.search-result-item');
             if (items.length === 0) return;
 
-            if (e.key === 'ArrowDown') {
+            if (e.key === 'ArrowDown') {{
                 e.preventDefault();
                 selectedIndex = (selectedIndex + 1) % items.length;
                 updateSelection();
-            } else if (e.key === 'ArrowUp') {
+            }} else if (e.key === 'ArrowUp') {{
                 e.preventDefault();
                 selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
                 updateSelection();
-            } else if (e.key === 'Enter') {
+            }} else if (e.key === 'Enter') {{
                 e.preventDefault();
-                if (selectedIndex >= 0) {
+                if (selectedIndex >= 0) {{
                     const link = items[selectedIndex].getAttribute('href');
                     window.location.href = link;
-                }
-            } else if (e.key === 'Escape') {
+                }}
+            }} else if (e.key === 'Escape') {{
                 searchResults.classList.add('hidden');
                 searchInput.value = '';
                 selectedIndex = -1;
-            }
-        });
+            }}
+        }});
 
         // 输入事件
-        searchInput.addEventListener('input', () => {
+        searchInput.addEventListener('input', () => {{
             performSearch(searchInput.value);
-        });
+        }});
 
         // 点击外部关闭搜索结果
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-container')) {
+        document.addEventListener('click', (e) => {{
+            if (!e.target.closest('.search-container')) {{
                 searchResults.classList.add('hidden');
-            }
-        });
+            }}
+        }});
 
         // 聚焦时显示结果
-        searchInput.addEventListener('focus', () => {
-            if (searchInput.value.trim()) {
+        searchInput.addEventListener('focus', () => {{
+            if (searchInput.value.trim()) {{
                 performSearch(searchInput.value);
-            }
-        });
+            }}
+        }});
     </script>
 </body>
 </html>

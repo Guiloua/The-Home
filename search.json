@@ -1,20 +1,8 @@
 [
     {
-        "title": "第一篇随笔",
-        "url": "./writing/post-1.html",
-        "excerpt": "这是我的第一篇技术随笔，分享一些开发心得...",
-        "date": "2024-01-01"
-    },
-    {
-        "title": "前端架构思考",
-        "url": "./writing/frontend-architecture.html",
-        "excerpt": "聊聊现代前端开发中的架构设计...",
-        "date": "2024-01-15"
-    },
-    {
-        "title": "CSS 技巧总结",
-        "url": "./writing/css-tips.html",
-        "excerpt": "一些实用的 CSS 技巧让你的代码更简洁...",
-        "date": "2024-02-01"
+        "title": "我的第一篇发布笔记",
+        "url": "./writing/first-published-note.html",
+        "excerpt": "这是一篇示例文章，展示如何使用发布系统从 notes 文件夹发布文章到个人网站",
+        "date": "2026-04-02"
     }
 ]
