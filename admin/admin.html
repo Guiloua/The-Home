@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>笔记管理 | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX for LaTeX formulas preview -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <style>
         html, body {
             margin: 0;
@@ -259,6 +263,10 @@ const POST_TEMPLATE = `<!DOCTYPE html>
     <title>{title} | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/style.css">
+    <!-- KaTeX for LaTeX formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <!-- 导航栏 -->
@@ -468,6 +476,29 @@ const POST_TEMPLATE = `<!DOCTYPE html>
                 performSearch(searchInput.value);
             }
         });
+
+        // Render LaTeX formulas with KaTeX
+        function renderLaTeX() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        // Render when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', renderLaTeX);
+        } else {
+            // DOM already loaded, render immediately
+            setTimeout(renderLaTeX, 0);
+        }
     <\/script>
 </body>
 </html>
@@ -767,6 +798,19 @@ function updatePreview() {
     }
     const html = window.marked.parse(currentNote.content || '');
     document.getElementById('previewArea').innerHTML = `<div class="article-content">${html}</div>`;
+    // Render LaTeX formulas in preview
+    if (window.renderMathInElement) {
+        const previewEl = document.getElementById('previewArea');
+        renderMathInElement(previewEl, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError: false
+        });
+    }
 }
 
 // === ESCAPE HTML ===

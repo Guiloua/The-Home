@@ -6,6 +6,10 @@
     <title>我的第一篇发布笔记 | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/style.css">
+    <!-- KaTeX for LaTeX formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <!-- 导航栏 -->
@@ -253,6 +257,29 @@
                 performSearch(searchInput.value);
             }}
         }});
+
+        // Render LaTeX formulas with KaTeX
+        function renderLaTeX() {{
+            if (window.renderMathInElement) {{
+                renderMathInElement(document.body, {{
+                    delimiters: [
+                        {{left: '$$', right: '$$', display: true}},
+                        {{left: '$', right: '$', display: false}},
+                        {{left: '\(', right: '\)', display: false}},
+                        {{left: '\[', right: '\]', display: true}}
+                    ],
+                    throwOnError: false
+                }});
+            }}
+        }}
+
+        // Render when DOM is loaded
+        if (document.readyState === 'loading') {{
+            document.addEventListener('DOMContentLoaded', renderLaTeX);
+        }} else {{
+            // DOM already loaded, render immediately
+            setTimeout(renderLaTeX, 0);
+        }}
     </script>
 </body>
 </html>
