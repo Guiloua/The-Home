@@ -1,14 +1,8 @@
 [
     {
-        "title": "我的第一篇发布笔记",
-        "url": "./writing/first-published-note.html",
-        "excerpt": "这是一篇示例文章，展示如何使用发布系统从 notes 文件夹发布文章到个人网站",
-        "date": "2026-04-02"
-    },
-    {
-        "title": "测试",
-        "url": "./writing/测试.html",
-        "excerpt": "测试本地前端是否能够编写、发布笔记内容",
+        "title": "Hellow world",
+        "url": "./writing/.html",
+        "excerpt": "Neko tochs this world firstly",
         "date": "2026-04-02"
     }
 ]
