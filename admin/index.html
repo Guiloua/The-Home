@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="bg-[#fbfbfb]">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,22 +10,25 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <style>
-        html, body {
+        html {
+            height: 100%;
+        }
+        body {
             margin: 0;
             padding: 0;
-            height: 100%;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
         * {
             box-sizing: border-box;
         }
         .editor-container {
-            height: calc(100vh - 220px);
+            height: calc(100vh - 220px - 2cm - 64px);
         }
         .editor textarea {
             resize: none;
-        }
-        .preview {
-            overflow-y: auto;
         }
         .note-item:hover {
             background-color: #f5f5f5;
@@ -98,33 +101,23 @@
         }
     </style>
 </head>
-<body class="bg-[#fbfbfb] pt-16 min-h-screen">
-    <!-- 顶部导航 -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-4 justify-between">
-        <div class="flex items-center space-x-4">
-            <h1 class="text-lg font-medium text-gray-800">个人网站管理</h1>
-            <button id="btnSelectRoot" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors" onclick="selectRootDir()">
-                选择项目根目录
-            </button>
-            <span id="dirStatus" class="text-sm text-gray-500">未选择文件夹</span>
-        </div>
-        <div class="flex items-center space-x-3">
-            <a href="./index.html" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">查看网站</a>
-        </div>
-    </nav>
+<body class="bg-[#fbfbfb]">
+    <!-- 顶部空白缓冲 (2cm) -->
+    <div style="height: 2cm; flex-shrink: 0;"></div>
 
-    <!-- 侧边栏选项卡 -->
-    <div class="flex h-[calc(100vh-64px)] mt-0">
-        <div class="w-80 border-r border-gray-200 bg-white flex flex-col">
+    <!-- 主内容区 -->
+    <div class="flex flex-1 overflow-hidden">
+        <!-- 左侧侧边栏 -->
+        <div class="w-80 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
             <!-- 选项卡 -->
-            <div class="flex border-b border-gray-100">
+            <div class="flex border-b border-gray-100 flex-shrink-0">
                 <button class="flex-1 py-2 text-sm font-medium" id="tabNotes" onclick="switchTab('notes')">笔记管理</button>
                 <button class="flex-1 py-2 text-sm font-medium" id="tabProfile" onclick="switchTab('profile')">编辑简介</button>
             </div>
 
             <!-- 笔记列表 -->
             <div id="panelNotes" class="flex-1 overflow-y-auto">
-                <div class="p-3 border-b border-gray-100">
+                <div class="p-3 border-b border-gray-100 flex-shrink-0">
                     <input type="text" id="searchInput" placeholder="搜索笔记..." class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300" oninput="filterNotes()">
                     <div class="mt-2 flex space-x-2">
                         <button id="btnNewNote" class="flex-1 px-3 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors" onclick="newNote()" disabled>
@@ -171,9 +164,9 @@
         </div>
 
         <!-- 右侧编辑区 -->
-        <div class="flex-1 flex flex-col overflow-hidden" id="mainPanel">
+        <div class="flex-1 flex flex-col overflow-hidden">
             <!-- 笔记编辑区 -->
-            <div id="noteEditArea">
+            <div id="noteEditArea" class="flex-1 flex flex-col overflow-hidden">
                 <div class="flex-none flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
                     <div class="flex items-center space-x-4">
                         <h2 id="currentNoteTitle" class="text-lg font-medium text-gray-800">请选择或新建笔记</h2>
@@ -235,6 +228,23 @@
         </div>
     </div>
 
+    <!-- 底部导航 (固定) -->
+    <nav class="fixed bottom-0 left-0 right-0 h-16 z-50 bg-white border-t border-gray-200 flex items-center px-4 justify-between">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-lg font-medium text-gray-800">个人网站管理</h1>
+            <button id="btnSelectRoot" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors" onclick="selectRootDir()">
+                选择项目根目录
+            </button>
+            <span id="dirStatus" class="text-sm text-gray-500">未选择文件夹</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="window.open('../index.html', '_blank')" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">查看网站</button>
+        </div>
+    </nav>
+
+    <!-- 底部留白防止内容被导航遮挡 -->
+    <div style="height: 64px; flex-shrink: 0;"></div>
+
     <script type="module">
         import { marked } from 'https://cdn.jsdelivr.net/npm/marked@11/lib/marked.esm.js';
         window.marked = marked;
@@ -248,6 +258,7 @@
 let rootDirHandle = null;
 let notesDirHandle = null;
 let writingDirHandle = null;
+let demoDirHandle = null;
 let notesFiles = [];
 let currentNote = null;
 let currentFileHandle = null;
@@ -360,8 +371,7 @@ const POST_TEMPLATE = `<!DOCTYPE html>
 
         // 搜索功能
         const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-        const searchContent = document.getElementById('searchContent');
+        const searchResults = document.getElementById('searchContent');
         let posts = [];
         let selectedIndex = -1;
 
@@ -477,7 +487,7 @@ const POST_TEMPLATE = `<!DOCTYPE html>
             }
         });
 
-        // Render LaTeX formulas with KaTeX
+        // Render LaTeX formulas with KaTeX after scripts are loaded
         function renderLaTeX() {
             if (window.renderMathInElement) {
                 renderMathInElement(document.body, {
@@ -489,15 +499,21 @@ const POST_TEMPLATE = `<!DOCTYPE html>
                     ],
                     throwOnError: false
                 });
+            } else {
+                // If not loaded yet, retry after a short delay
+                setTimeout(renderLaTeX, 100);
             }
         }
 
-        // Render when DOM is loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', renderLaTeX);
+        // Try to render when everything is ready
+        if (document.readyState === 'complete') {
+            renderLaTeX();
+        } else if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(renderLaTeX, 50);
+            });
         } else {
-            // DOM already loaded, render immediately
-            setTimeout(renderLaTeX, 0);
+            setTimeout(renderLaTeX, 50);
         }
     <\/script>
 </body>
@@ -505,13 +521,24 @@ const POST_TEMPLATE = `<!DOCTYPE html>
 `;
 
 // === INITIALIZATION ===
-(function init() {
+(async function init() {
     if (!('showDirectoryPicker' in window)) {
         document.getElementById('dirStatus').textContent = '你的浏览器不支持 File System Access API，请使用 Chrome/Edge 最新版本';
         document.getElementById('dirStatus').classList.add('text-red-500');
     }
     // Initialize tab styling
     switchTab('notes');
+
+    // Try to restore previously selected directory
+    try {
+        if ('storage' in navigator && 'getDirectory' in navigator.storage) {
+            // We can't get the previous handle, but we can prompt user to quickly re-select
+            // For privacy reasons, browser doesn't allow persisting the handle across page reloads
+            // So we just leave it as is, user needs to select once per session
+        }
+    } catch (e) {
+        console.log('Cannot restore previous directory selection:', e);
+    }
 })();
 
 // === TAB SWITCH ===
@@ -543,6 +570,11 @@ async function selectRootDir() {
             writingDirHandle = await rootDirHandle.getDirectoryHandle('writing', { create: true });
         } catch (e) {
             writingDirHandle = await rootDirHandle.getDirectoryHandle('writing');
+        }
+        try {
+            demoDirHandle = await rootDirHandle.getDirectoryHandle('demo', { create: true });
+        } catch (e) {
+            demoDirHandle = await rootDirHandle.getDirectoryHandle('demo');
         }
 
         document.getElementById('dirStatus').textContent = '已选择项目根目录';
@@ -951,11 +983,12 @@ async function publishCurrentNote() {
 
         await updateWritingIndex(publishedPosts);
         await updateSearchJson(publishedPosts);
+        await updateDemoIndex();
 
-        document.getElementById('publishStatus').textContent = `✓ 已发布: ${slug}.html`;
+        document.getElementById('publishStatus').textContent = `✓ 已发布: ${slug}.html，Demo 列表已更新`;
         document.getElementById('publishStatus').className = 'text-green-600';
 
-        alert('发布成功！刷新随笔页面即可看到新文章。');
+        alert('发布成功！刷新随笔页面和 Demo 页面即可看到更新。');
     } catch (e) {
         console.error(e);
         document.getElementById('publishStatus').textContent = `✗ 发布失败: ${e.message}`;
@@ -1003,10 +1036,11 @@ async function publishAll() {
         // Update index and search
         await updateWritingIndex(publishedPosts);
         await updateSearchJson(publishedPosts);
+        await updateDemoIndex();
 
-        document.getElementById('publishStatus').textContent = `✓ 完成！共发布 ${publishedPosts.length} 篇文章，已清理未发布笔记`;
+        document.getElementById('publishStatus').textContent = `✓ 完成！共发布 ${publishedPosts.length} 篇文章，Demo 列表已更新`;
         document.getElementById('publishStatus').className = 'text-green-600';
-        alert(`发布完成！共发布 ${publishedPosts.length} 篇文章，已清理未发布笔记的 HTML 文件`);
+        alert(`发布完成！共发布 ${publishedPosts.length} 篇文章，Demo 列表已更新`);
     } catch (e) {
         console.error(e);
         document.getElementById('publishStatus').textContent = `✗ 发布失败: ${e.message}`;
@@ -1120,6 +1154,77 @@ async function cleanupUnpublishedPosts() {
         }
     } catch (e) {
         console.warn('Cleanup incomplete:', e);
+    }
+}
+
+// === UPDATE DEMO INDEX ===
+async function updateDemoIndex() {
+    if (!demoDirHandle) return;
+
+    try {
+        // Get all PDF files in demo folder
+        const demoFiles = [];
+        for await (const entry of demoDirHandle.values()) {
+            if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.pdf')) {
+                // Extract title from filename (remove extension, replace dashes/underscores with spaces)
+                let title = entry.name.replace(/\.pdf$/i, '');
+                // If filename starts with number like "01-", keep the order but display nicely
+                const displayTitle = title.replace(/^[\d]+\-/, '').replace(/[-_]/g, ' ');
+                demoFiles.push({
+                    filename: entry.name,
+                    title: displayTitle,
+                    sortKey: title.toLowerCase()
+                });
+            }
+        }
+
+        // Sort by filename (alphabetical order - user can control order with 01-, 02- prefixes)
+        demoFiles.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+        // Read existing demo index.html
+        const indexHandle = await demoDirHandle.getFileHandle('index.html');
+        const file = await indexHandle.getFile();
+        let content = await file.text();
+
+        // Generate demo items HTML
+        let demoItemsHtml;
+        if (demoFiles.length === 0) {
+            demoItemsHtml = `                <div class="p-10 text-center text-gray-400">
+                    暂无 Demo 文件
+                </div>`;
+        } else {
+            demoItemsHtml = demoFiles.map(demo => `                <div class="demo-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm fade-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-medium text-gray-800 mb-1">${escapeHtml(demo.title)}</h2>
+                            <p class="text-sm text-gray-500">${demo.filename}</p>
+                        </div>
+                        <a href="./${demo.filename}" target="_blank" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors">
+                            查看 PDF
+                        </a>
+                    </div>
+                </div>`).join('\n');
+        }
+
+        // Replace content in #demoList
+        const pattern = /(<div class="space-y-4" id="demoList">)[\s\S]*?(<\/div>\s*<\/main>)/;
+        const match = content.match(pattern);
+
+        if (!match) {
+            console.warn('Could not find #demoList container in demo/index.html');
+            return;
+        }
+
+        const newContent = content.replace(pattern, `$1\n${demoItemsHtml}\n$2`);
+
+        // Write back
+        const writable = await indexHandle.createWritable();
+        await writable.write(newContent);
+        await writable.close();
+
+        console.log(`Demo index updated: ${demoFiles.length} files`);
+    } catch (e) {
+        console.error('Failed to update demo index:', e);
     }
 }
 

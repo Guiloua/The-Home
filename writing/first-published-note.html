@@ -258,27 +258,33 @@
             }}
         }});
 
-        // Render LaTeX formulas with KaTeX
+        // Render LaTeX formulas with KaTeX after scripts are loaded
         function renderLaTeX() {{
             if (window.renderMathInElement) {{
                 renderMathInElement(document.body, {{
                     delimiters: [
                         {{left: '$$', right: '$$', display: true}},
                         {{left: '$', right: '$', display: false}},
-                        {{left: '\(', right: '\)', display: false}},
-                        {{left: '\[', right: '\]', display: true}}
+                        {{left: '\\(', right: '\\)', display: false}},
+                        {{left: '\\[', right: '\\]', display: true}}
                     ],
                     throwOnError: false
                 }});
+            }} else {{
+                // If not loaded yet, retry after a short delay
+                setTimeout(renderLaTeX, 100);
             }}
         }}
 
-        // Render when DOM is loaded
-        if (document.readyState === 'loading') {{
-            document.addEventListener('DOMContentLoaded', renderLaTeX);
+        // Try to render when everything is ready
+        if (document.readyState === 'complete') {{
+            renderLaTeX();
+        }} else if (document.readyState === 'loading') {{
+            document.addEventListener('DOMContentLoaded', function() {{
+                setTimeout(renderLaTeX, 50);
+            }});
         }} else {{
-            // DOM already loaded, render immediately
-            setTimeout(renderLaTeX, 0);
+            setTimeout(renderLaTeX, 50);
         }}
     </script>
 </body>
