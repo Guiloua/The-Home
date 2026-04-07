@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSS 技巧总结 | 个人主页</title>
+    <title>测试 | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -68,66 +68,22 @@
         <article class="max-w-2xl mx-auto fade-in" style="animation-delay: 0.2s">
             <!-- 文章头部 -->
             <header class="mb-10 text-center">
-                <div class="text-sm text-gray-400 mb-3 font-light">2026-04-01</div>
-                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">CSS 技巧总结</h1>
-                <p class="text-gray-500 text-lg font-light">一些实用的 CSS 技巧让你的代码更简洁，布局更优雅</p>
+                <div class="text-sm text-gray-400 mb-3 font-light">2026-04-02</div>
+                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">测试</h1>
+                <p class="text-gray-500 text-lg font-light">测试本地前端是否能够编写、发布笔记内容</p>
             </header>
 
             <!-- 文章正文 -->
             <div class="article-content text-gray-700 text-base leading-relaxed">
-<h1>CSS 技巧总结</h1>
-<p>这里总结一些我平时常用的 CSS 技巧，让代码更简洁，布局更优雅。</p>
-<h2>1. 使用 CSS 变量保持一致性</h2>
-<p>CSS 变量可以让你的主题颜色、间距等保持一致，方便修改：</p>
-<pre><code class="language-css">:root {
-  --primary-color: #333;
-  --spacing-unit: 8px;
-}
-
-.button {
-  background-color: var(--primary-color);
-  margin: calc(var(--spacing-unit) * 2);
-}
-</code></pre>
-<h2>2. 居中技巧</h2>
-<p>水平垂直居中的几种方法：</p>
-<h3>Flexbox （推荐）</h3>
-<pre><code class="language-css">.container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-</code></pre>
-<h3>Grid</h3>
-<pre><code class="language-css">.container {
-  display: grid;
-  place-items: center;
-}
-</code></pre>
-<h2>3. 文字截断</h2>
-<pre><code class="language-css">/* 单行截断 */
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 多行截断 */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</code></pre>
-<p>更多技巧后续慢慢补充...</p>
+<h1>This is a text for testing</h1>
+<p>Holle world</p>
             </div>
 
             <!-- 文章底部 -->
             <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">
                 <div class="flex items-center justify-between">
                     <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
-                    <span>#CSS #前端</span>
+                    <span></span>
                 </div>
             </footer>
         </article>

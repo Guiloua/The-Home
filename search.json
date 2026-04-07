@@ -6,9 +6,9 @@
         "date": "2026-04-02"
     },
     {
-        "title": "CSS 技巧总结",
-        "url": "./writing/css-技巧总结.html",
-        "excerpt": "一些实用的 CSS 技巧让你的代码更简洁，布局更优雅",
-        "date": "2026-04-01"
+        "title": "测试",
+        "url": "./writing/测试.html",
+        "excerpt": "测试本地前端是否能够编写、发布笔记内容",
+        "date": "2026-04-02"
     }
 ]
