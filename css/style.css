@@ -141,3 +141,18 @@ body {
 .social-link:hover {
     transform: translateY(-2px);
 }
+
+/* Demo page styles */
+.demo-card {
+    cursor: pointer;
+}
+
+.demo-card:active {
+    transform: scale(0.99);
+}
+
+#kdistance-code pre {
+    white-space: pre;
+    line-height: 1.6;
+    margin: 0;
+}
