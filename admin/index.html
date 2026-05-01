@@ -3,1396 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>笔记管理 | 个人主页</title>
+    <title>网站管理后台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- KaTeX for LaTeX formulas preview -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <style>
-        html {
-            height: 100%;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-        * {
-            box-sizing: border-box;
-        }
-        .editor-container {
-            height: calc(100vh - 220px - 2cm - 64px);
-        }
-        .editor textarea {
-            resize: none;
-        }
-        .note-item:hover {
-            background-color: #f5f5f5;
-        }
-        .note-item.active {
-            background-color: #ebebeb;
-        }
-        .badge-published {
-            background-color: #10b981;
-            color: white;
-        }
-        .badge-draft {
-            background-color: #6b7280;
-            color: white;
-        }
-        .tab-active {
-            background-color: #e5e7eb;
-        }
-        /* Article content styles for preview */
-        .preview .article-content p {
-            margin-bottom: 1.25rem;
-            line-height: 1.8;
-        }
-        .preview .article-content h2 {
-            font-size: 1.5rem;
-            font-weight: 500;
-            margin: 2rem 0 1rem;
-            color: #111827;
-        }
-        .preview .article-content h3 {
-            font-size: 1.25rem;
-            font-weight: 500;
-            margin: 1.75rem 0 0.75rem;
-            color: #1f2937;
-        }
-        .preview .article-content ul, .preview .article-content ol {
-            margin-bottom: 1.25rem;
-            padding-left: 1.5rem;
-        }
-        .preview .article-content li {
-            margin-bottom: 0.5rem;
-            line-height: 1.7;
-        }
-        .preview .article-content code {
-            background-color: #f3f4f6;
-            padding: 0.125rem 0.375rem;
-            border-radius: 0.25rem;
-            font-size: 0.875em;
-            font-family: monospace;
-        }
-        .preview .article-content pre {
-            background-color: #1f2937;
-            color: #f9fafb;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin-bottom: 1.25rem;
-        }
-        .preview .article-content pre code {
-            background: none;
-            color: inherit;
-            padding: 0;
-        }
-        .preview .article-content blockquote {
-            border-left: 4px solid #e5e7eb;
-            padding-left: 1rem;
-            color: #6b7280;
-            margin: 1.5rem 0;
-            font-style: italic;
-        }
+        body, html { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        .tab-active { background-color: #f3f4f6; border-bottom: 2px solid #3b82f6; color: #1d4ed8; }
+        .note-item.active { background-color: #eff6ff; border-left: 4px solid #3b82f6; }
+        .editor-textarea { resize: none; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .preview-content h1 { font-size: 1.875rem; font-weight: 700; margin: 1.5rem 0 1rem; }
+        .preview-content h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; }
+        .preview-content p { margin-bottom: 1rem; line-height: 1.6; color: #374151; }
     </style>
 </head>
-<body class="bg-[#fbfbfb]">
-    <!-- 顶部空白缓冲 (2cm) -->
-    <div style="height: 2cm; flex-shrink: 0;"></div>
-
-    <!-- 主内容区 -->
-    <div class="flex flex-1 overflow-hidden">
-        <!-- 左侧侧边栏 -->
-        <div class="w-80 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
-            <!-- 选项卡 -->
-            <div class="flex border-b border-gray-100 flex-shrink-0">
-                <button class="flex-1 py-2 text-sm font-medium" id="tabNotes" onclick="switchTab('notes')">笔记管理</button>
-                <button class="flex-1 py-2 text-sm font-medium" id="tabProfile" onclick="switchTab('profile')">编辑简介</button>
-            </div>
-
-            <!-- 笔记列表 -->
-            <div id="panelNotes" class="flex-1 overflow-y-auto">
-                <div class="p-3 border-b border-gray-100 flex-shrink-0">
-                    <input type="text" id="searchInput" placeholder="搜索笔记..." class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300" oninput="filterNotes()">
-                    <div class="mt-2 flex space-x-2">
-                        <button id="btnNewNote" class="flex-1 px-3 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors" onclick="newNote()" disabled>
-                            + 新建笔记
-                        </button>
-                        <button id="btnPublishAll" class="flex-1 px-3 py-1.5 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors" onclick="publishAll()" disabled>
-                            一键发布全部
-                        </button>
-                    </div>
-                </div>
-                <div id="notesList" class="divide-y divide-gray-100">
-                    <div class="p-8 text-center text-gray-400 text-sm">
-                        请先点击「选择项目根目录」<br>授权浏览器访问本地项目文件夹
-                    </div>
-                </div>
-            </div>
-
-            <!-- 个人简介编辑 -->
-            <div id="panelProfile" class="flex-1 overflow-y-auto hidden">
-                <div class="p-4">
-                    <h3 class="text-sm font-medium text-gray-700 mb-3">个人简介内容</h3>
-                    <p class="text-xs text-gray-500 mb-3">编辑 "关于我" 部分的内容，支持 HTML</p>
-                    <textarea id="profileContent" class="w-full h-64 p-3 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300"></textarea>
-                    <div class="mt-3">
-                        <label class="block text-xs text-gray-500 mb-1">姓名</label>
-                        <input type="text" id="profileName" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300">
-                    </div>
-                    <div class="mt-3">
-                        <label class="block text-xs text-gray-500 mb-1">头衔</label>
-                        <input type="text" id="profileTitle" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300">
-                    </div>
-                    <div class="mt-3">
-                        <label class="block text-xs text-gray-500 mb-1">技能（逗号分隔）</label>
-                        <input type="text" id="profileSkills" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300">
-                    </div>
-                    <div class="mt-4">
-                        <button class="w-full px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors" onclick="saveProfile()">
-                            保存个人简介
-                        </button>
-                    </div>
-                    <div id="profileStatus" class="mt-3 text-sm"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 右侧编辑区 -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- 笔记编辑区 -->
-            <div id="noteEditArea" class="flex-1 flex flex-col overflow-hidden">
-                <div class="flex-none flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
-                    <div class="flex items-center space-x-4">
-                        <h2 id="currentNoteTitle" class="text-lg font-medium text-gray-800">请选择或新建笔记</h2>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <label class="flex items-center space-x-2 text-sm text-gray-600">
-                            <input type="checkbox" id="publishCheck" onchange="updateMetadata()">
-                            <span>发布到网站</span>
-                        </label>
-                        <button id="btnSave" class="px-4 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors" onclick="saveNote()" disabled>
-                            保存笔记
-                        </button>
-                        <button id="btnPublishCurrent" class="px-4 py-1.5 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors" onclick="publishCurrentNote()" disabled>
-                            发布
-                        </button>
-                        <button id="btnDelete" class="px-4 py-1.5 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors" onclick="deleteNote()" disabled>
-                            删除
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 元数据 -->
-                <div class="flex-none p-3 border-b border-gray-200 bg-white grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">标题</label>
-                        <input type="text" id="metaTitle" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300" oninput="updateMetadata()" placeholder="文章标题">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">日期</label>
-                        <input type="date" id="metaDate" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300" onchange="updateMetadata()">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs text-gray-500 mb-1">简介</label>
-                        <input type="text" id="metaExcerpt" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300" oninput="updateMetadata()" placeholder="1-2句话描述文章，用于列表展示">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs text-gray-500 mb-1">标签（逗号分隔）</label>
-                        <input type="text" id="metaTags" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-300" oninput="updateMetadata()" placeholder="技术, 生活, 心得">
-                    </div>
-                </div>
-
-                <!-- 编辑 + 预览 -->
-                <div class="flex-1 flex editor-container">
-                    <div class="w-1/2 editor border-r border-gray-200 bg-gray-50">
-                        <textarea id="editorContent" class="w-full h-full p-4 text-sm border-0 focus:outline-none" placeholder="在这里写 markdown 内容..." oninput="onEditorInput()" disabled></textarea>
-                    </div>
-                    <div class="w-1/2 preview bg-white p-4" id="previewArea">
-                        <div class="text-gray-400 text-sm text-center mt-10">
-                            选择或新建笔记后在这里预览
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex-none p-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500 flex justify-between items-center">
-                    <span id="saveStatus"></span>
-                    <span id="publishStatus"></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 底部导航 (固定) -->
-    <nav class="fixed bottom-0 left-0 right-0 h-16 z-50 bg-white border-t border-gray-200 flex items-center px-4 justify-between">
+<body class="bg-gray-50 flex flex-col">
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-20">
         <div class="flex items-center space-x-4">
-            <h1 class="text-lg font-medium text-gray-800">个人网站管理</h1>
-            <button id="btnSelectRoot" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors" onclick="selectRootDir()">
-                选择项目根目录
-            </button>
-            <span id="dirStatus" class="text-sm text-gray-500">未选择文件夹</span>
+            <h1 class="font-semibold text-gray-800">管理后台</h1>
+            <div id="dirStatus" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">正在检查权限...</div>
         </div>
         <div class="flex items-center space-x-3">
-            <button onclick="window.open('../index.html', '_blank')" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">查看网站</button>
+            <button id="btnSelectRoot" class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">连接项目目录</button>
+            <button onclick="window.open('../index.html', '_blank')" class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">预览主页</button>
         </div>
-    </nav>
+    </header>
 
-    <!-- 底部留白防止内容被导航遮挡 -->
-    <div style="height: 64px; flex-shrink: 0;"></div>
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+            <nav class="flex border-b border-gray-200">
+                <button id="tabNotes" class="flex-1 py-3 text-sm font-medium">随笔</button>
+                <button id="tabDemos" class="flex-1 py-3 text-sm font-medium">Demo</button>
+                <button id="tabProfile" class="flex-1 py-3 text-sm font-medium">简介</button>
+            </nav>
+            <div class="flex-1 overflow-y-auto">
+                <div id="panelNotes" class="p-3 space-y-3">
+                    <input type="text" id="searchInput" placeholder="搜索随笔..." class="w-full px-3 py-2 border rounded-md text-sm">
+                    <div class="flex space-x-2">
+                        <button id="btnNewNote" class="flex-1 py-2 bg-green-500 text-white text-xs rounded disabled:opacity-50">新建</button>
+                        <button id="btnPublishAll" class="flex-1 py-2 bg-purple-500 text-white text-xs rounded disabled:opacity-50">全站同步</button>
+                    </div>
+                    <div id="notesList" class="space-y-1"></div>
+                </div>
+                <div id="panelDemos" class="hidden p-3 space-y-3">
+                    <button id="btnAddDemo" class="w-full py-2 bg-blue-500 text-white text-xs rounded disabled:opacity-50">添加 Demo 文件</button>
+                    <div id="demoFilesList" class="space-y-1"></div>
+                </div>
+                <div id="panelProfile" class="hidden p-4 space-y-4">
+                    <input type="text" id="profileName" placeholder="姓名" class="w-full px-3 py-2 border rounded text-sm">
+                    <input type="text" id="profileTitle" placeholder="头衔" class="w-full px-3 py-2 border rounded text-sm">
+                    <textarea id="profileContent" placeholder="简介" class="w-full h-32 px-3 py-2 border rounded text-sm"></textarea>
+                    <input type="text" id="profileSkills" placeholder="技能 (逗号分隔)" class="w-full px-3 py-2 border rounded text-sm">
+                    <button id="btnSaveProfile" class="w-full py-2 bg-blue-600 text-white text-sm rounded">保存</button>
+                    <div id="profileStatus" class="text-center text-xs mt-2"></div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="editorArea" class="flex-1 flex flex-col bg-white">
+            <div class="h-14 border-b border-gray-200 flex items-center justify-between px-6">
+                <h2 id="currentNoteTitle" class="font-medium text-gray-700">未选择随笔</h2>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center space-x-2 text-sm"><input type="checkbox" id="publishCheck"> <span>发布</span></label>
+                    <button id="btnSaveNote" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded disabled:opacity-50">保存</button>
+                    <button id="btnPublishCurrent" class="px-4 py-1.5 bg-purple-500 text-white text-xs rounded disabled:opacity-50">发布</button>
+                    <button id="btnDeleteNote" class="px-4 py-1.5 bg-red-100 text-red-600 text-xs rounded disabled:opacity-50">删除</button>
+                </div>
+            </div>
+            <div id="metaArea" class="p-4 bg-gray-50 grid grid-cols-2 gap-4 border-b">
+                <input type="text" id="metaTitle" placeholder="标题" class="px-3 py-2 border rounded text-sm">
+                <input type="date" id="metaDate" class="px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaExcerpt" placeholder="摘要" class="col-span-2 px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaTags" placeholder="标签" class="col-span-2 px-3 py-2 border rounded text-sm">
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <textarea id="editorContent" class="w-1/2 p-6 border-r focus:outline-none editor-textarea" disabled></textarea>
+                <div id="previewArea" class="w-1/2 p-6 overflow-y-auto preview-content"></div>
+            </div>
+        </main>
+    </div>
 
     <script type="module">
         import { marked } from 'https://cdn.jsdelivr.net/npm/marked@11/lib/marked.esm.js';
-        window.marked = marked;
-        marked.setOptions({
-            breaks: true
-        });
-    </script>
 
-    <script>
-// === GLOBAL VARIABLES DECLARATION ===
-let rootDirHandle = null;
-let notesDirHandle = null;
-let writingDirHandle = null;
-let demoDirHandle = null;
-let notesFiles = [];
-let currentNote = null;
-let currentFileHandle = null;
-let searchQuery = '';
-let currentTab = 'notes';
+        let rootDirHandle, notesDirHandle, writingDirHandle, demoDirHandle;
+        let notesFiles = [], currentNote = null, currentFileHandle = null;
 
-// === ARTICLE HTML TEMPLATE CONSTANT ===
-const POST_TEMPLATE = `<!DOCTYPE html>
+        const $ = id => document.getElementById(id);
+        const escapeHtml = t => { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; };
+        const slugify = t => t ? t.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim() : 'untitled';
+
+        const POST_TEMPLATE = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} | 个人主页</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><title>{title}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
     <link rel="stylesheet" href="../css/style.css">
-    <!-- KaTeX for LaTeX formulas -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]})"><\/script>
 </head>
-<body>
-    <!-- 导航栏 -->
-    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 fade-in" style="animation-delay: 0.1s">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <div class="flex-shrink-0">
-                    <a href="../index.html" class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">Me</a>
-                </div>
+<body class="pt-24 px-4"><nav class="fixed top-0 left-0 right-0 bg-white/80 h-16 border-b flex items-center px-8"><a href="../index.html">Me</a></nav>
+<article class="max-w-2xl mx-auto"><header class="mb-10 text-center"><div class="text-sm text-gray-400">{date}</div><h1 class="text-3xl font-light">{title}</h1><p class="text-gray-500">{excerpt}</p></header>
+<div class="article-content">{content}</div><footer class="mt-12 pt-8 border-t text-sm text-gray-400 flex justify-between"><a href="../index.html">← 返回首页</a><span>{tagsHtml}</span></footer></article></body></html>`;
 
-                <!-- 导航菜单 -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="../writing/index.html" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">随笔</a>
-                    <a href="../profile/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">简介</a>
-                    <a href="../demo/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">Demo</a>
-                </div>
-
-                <!-- 搜索框 -->
-                <div class="relative search-container">
-                    <div class="flex items-center bg-gray-50 rounded-full px-3 py-1.5 border border-gray-100 hover:border-gray-200 transition-all">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="搜索随笔..."
-                            class="search-input bg-transparent ml-2 w-24 md:w-32 text-sm text-gray-700 placeholder-gray-400 focus:w-32 md:focus:w-48 transition-all duration-300"
-                            id="searchInput"
-                            autocomplete="off"
-                        >
-                    </div>
-                    <div id="searchResults" class="absolute top-full right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-100 hidden max-h-80 overflow-y-auto z-50">
-                        <div id="searchContent"></div>
-                    </div>
-                </div>
-
-                <!-- 移动端菜单按钮 -->
-                <button class="md:hidden flex items-center" id="mobileMenuBtn">
-                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <div class="md:hidden hidden bg-white border-t border-gray-100" id="mobileMenu">
-            <div class="px-4 py-3 space-y-3">
-                <a href="../writing/index.html" class="block text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
-                <a href="../profile/" class="block text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
-                <a href="../demo/" class="block text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 文章内容 -->
-    <main class="pt-24 pb-16 px-4">
-        <article class="max-w-2xl mx-auto fade-in" style="animation-delay: 0.2s">
-            <!-- 文章头部 -->
-            <header class="mb-10 text-center">
-                <div class="text-sm text-gray-400 mb-3 font-light">{date}</div>
-                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">{title}</h1>
-                <p class="text-gray-500 text-lg font-light">{excerpt}</p>
-            </header>
-
-            <!-- 文章正文 -->
-            <div class="article-content text-gray-700 text-base leading-relaxed">
-{content}
-            </div>
-
-            <!-- 文章底部 -->
-            <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">
-                <div class="flex items-center justify-between">
-                    <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
-                    <span>{tagsHtml}</span>
-                </div>
-            </footer>
-        </article>
-    </main>
-
-    <script>
-        // 移动端菜单切换
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-
-        if (mobileMenuBtn && mobileMenu) {
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-
-        // 搜索功能
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchContent');
-        let posts = [];
-        let selectedIndex = -1;
-
-        // 加载搜索索引
-        fetch('../search.json')
-            .then(response => response.json())
-            .then(data => {
-                posts = data;
-            })
-            .catch(error => {
-                console.log('加载搜索索引失败:', error);
-            });
-
-        // 搜索函数
-        function performSearch(query) {
-            if (!query.trim()) {
-                searchResults.classList.add('hidden');
-                selectedIndex = -1;
-                return;
-            }
-
-            const lowerQuery = query.toLowerCase();
-            const results = posts.filter(post => {
-                return post.title.toLowerCase().includes(lowerQuery) ||
-                       post.excerpt.toLowerCase().includes(lowerQuery);
-            });
-
-            displayResults(results, lowerQuery);
-            selectedIndex = results.length > 0 ? 0 : -1;
-            updateSelection();
-        }
-
-        // 高亮关键词
-        function highlight(text, query) {
-            if (!query) return text;
-            const regex = new RegExp(\`(\${query})\`, 'gi');
-            return text.replace(regex, '<mark class="bg-yellow-200 rounded px-1">$1</mark>');
-        }
-
-        // 显示搜索结果
-        function displayResults(results, query) {
-            if (results.length === 0) {
-                searchContent.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">未找到相关内容</div>';
-                searchResults.classList.remove('hidden');
-                return;
-            }
-
-            const html = results.map((post, index) => \`
-                <a href="../\${post.url}" class="search-result-item block px-4 py-3 border-b border-gray-50 \${index === selectedIndex ? 'active' : ''}">
-                    <div class="font-medium text-gray-800 text-sm mb-1">\${highlight(post.title, query)}</div>
-                    <div class="text-xs text-gray-400 mb-1">\${post.date}</div>
-                    <div class="text-xs text-gray-500 line-clamp-1">\${post.excerpt}</div>
-                </a>
-            \`).join('');
-
-            searchContent.innerHTML = html;
-            searchResults.classList.remove('hidden');
-        }
-
-        // 更新选中状态
-        function updateSelection() {
-            document.querySelectorAll('.search-result-item').forEach((item, index) => {
-                if (index === selectedIndex) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-        }
-
-        // 键盘导航
-        searchInput.addEventListener('keydown', (e) => {
-            const items = document.querySelectorAll('.search-result-item');
-            if (items.length === 0) return;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                selectedIndex = (selectedIndex + 1) % items.length;
-                updateSelection();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
-                updateSelection();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (selectedIndex >= 0) {
-                    const link = items[selectedIndex].getAttribute('href');
-                    window.location.href = link;
-                }
-            } else if (e.key === 'Escape') {
-                searchResults.classList.add('hidden');
-                searchInput.value = '';
-                selectedIndex = -1;
-            }
+        // IndexedDB for handle persistence
+        const DB_NAME = 'NekoChanAdmin';
+        const STORE_NAME = 'Handles';
+        const getDB = () => new Promise(r => {
+            const req = indexedDB.open(DB_NAME, 1);
+            req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+            req.onsuccess = () => r(req.result);
         });
-
-        // 输入事件
-        searchInput.addEventListener('input', () => {
-            performSearch(searchInput.value);
-        });
-
-        // 点击外部关闭搜索结果
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-container')) {
-                searchResults.classList.add('hidden');
-            }
-        });
-
-        // 聚焦时显示结果
-        searchInput.addEventListener('focus', () => {
-            if (searchInput.value.trim()) {
-                performSearch(searchInput.value);
-            }
-        });
-
-        // Render LaTeX formulas with KaTeX after scripts are loaded
-        function renderLaTeX() {
-            if (window.renderMathInElement) {
-                renderMathInElement(document.body, {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true},
-                        {left: '$', right: '$', display: false},
-                        {left: '\\(', right: '\\)', display: false},
-                        {left: '\\[', right: '\\]', display: true}
-                    ],
-                    throwOnError: false
-                });
-            } else {
-                // If not loaded yet, retry after a short delay
-                setTimeout(renderLaTeX, 100);
-            }
-        }
-
-        // Try to render when everything is ready
-        if (document.readyState === 'complete') {
-            renderLaTeX();
-        } else if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(renderLaTeX, 50);
-            });
-        } else {
-            setTimeout(renderLaTeX, 50);
-        }
-    <\/script>
-</body>
-</html>
-`;
-
-// === INITIALIZATION ===
-(async function init() {
-    if (!('showDirectoryPicker' in window)) {
-        document.getElementById('dirStatus').textContent = '你的浏览器不支持 File System Access API，请使用 Chrome/Edge 最新版本';
-        document.getElementById('dirStatus').classList.add('text-red-500');
-    }
-    // Initialize tab styling
-    switchTab('notes');
-
-    // Try to restore previously selected directory
-    try {
-        if ('storage' in navigator && 'getDirectory' in navigator.storage) {
-            // We can't get the previous handle, but we can prompt user to quickly re-select
-            // For privacy reasons, browser doesn't allow persisting the handle across page reloads
-            // So we just leave it as is, user needs to select once per session
-        }
-    } catch (e) {
-        console.log('Cannot restore previous directory selection:', e);
-    }
-})();
-
-// === TAB SWITCH ===
-function switchTab(tab) {
-    currentTab = tab;
-    document.getElementById('tabNotes').className = tab === 'notes' ? 'flex-1 py-2 text-sm font-medium tab-active' : 'flex-1 py-2 text-sm font-medium';
-    document.getElementById('tabProfile').className = tab === 'profile' ? 'flex-1 py-2 text-sm font-medium tab-active' : 'flex-1 py-2 text-sm font-medium';
-    document.getElementById('panelNotes').classList.toggle('hidden', tab !== 'notes');
-    document.getElementById('panelProfile').classList.toggle('hidden', tab !== 'profile');
-    document.getElementById('noteEditArea').classList.toggle('hidden', tab !== 'notes');
-
-    if (tab === 'profile' && rootDirHandle) {
-        loadProfile();
-    }
-}
-window.switchTab = switchTab;
-
-// === SELECT ROOT DIRECTORY ===
-async function selectRootDir() {
-    try {
-        rootDirHandle = await window.showDirectoryPicker();
-        // Get subdirectory handles, create if not exists
-        try {
-            notesDirHandle = await rootDirHandle.getDirectoryHandle('notes', { create: true });
-        } catch (e) {
-            notesDirHandle = await rootDirHandle.getDirectoryHandle('notes');
-        }
-        try {
-            writingDirHandle = await rootDirHandle.getDirectoryHandle('writing', { create: true });
-        } catch (e) {
-            writingDirHandle = await rootDirHandle.getDirectoryHandle('writing');
-        }
-        try {
-            demoDirHandle = await rootDirHandle.getDirectoryHandle('demo', { create: true });
-        } catch (e) {
-            demoDirHandle = await rootDirHandle.getDirectoryHandle('demo');
-        }
-
-        document.getElementById('dirStatus').textContent = '已选择项目根目录';
-        document.getElementById('dirStatus').classList.remove('text-gray-500');
-        document.getElementById('dirStatus').classList.add('text-green-600');
-        document.getElementById('btnNewNote').disabled = false;
-        document.getElementById('btnPublishAll').disabled = false;
-
-        await loadNotesList();
-        if (currentTab === 'profile') {
-            await loadProfile();
-        }
-    } catch (e) {
-        console.error(e);
-        alert('选择文件夹失败: ' + e.message);
-    }
-}
-window.selectRootDir = selectRootDir;
-
-// === PARSE FRONTMATTER ===
-function parseFrontmatter(content) {
-    // Support both Windows \r\n and Unix \n
-    const frontmatterRegex = /^\s*---(?:\r?\n)([\s\S]*?)(?:\r?\n)---(?:\r?\n)/;
-    const match = content.match(frontmatterRegex);
-
-    const metadata = {
-        title: '',
-        date: new Date().toISOString().split('T')[0],
-        excerpt: '',
-        publish: false,
-        tags: ''
-    };
-    let body = content;
-
-    if (match && match[1]) {
-        const frontmatterText = match[1];
-        body = content.slice(match[0].length);
-
-        frontmatterText.trim().split('\n').forEach(line => {
-            line = line.trim();
-            if (!line || !line.includes(':')) return;
-            const [key, ...valueParts] = line.split(':');
-            let value = valueParts.join(':').trim();
-            key = key.trim();
-            if (value.toLowerCase() === 'true') value = true;
-            if (value.toLowerCase() === 'false') value = false;
-            metadata[key] = value;
-        });
-    }
-
-    return { metadata, body };
-}
-
-// === GENERATE FRONTMATTER TEXT ===
-function generateFrontmatter(metadata) {
-    let lines = ['---'];
-    for (const [key, value] of Object.entries(metadata)) {
-        if (value !== undefined && value !== null && value !== '') {
-            lines.push(`${key}: ${value}`);
-        }
-    }
-    lines.push('---');
-    return lines.join('\n') + '\n\n';
-}
-
-// === GENERATE SLUG ===
-function slugify(title) {
-    if (!title) return 'untitled';
-    return title
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .trim();
-}
-
-// === LOAD NOTES LIST ===
-async function loadNotesList() {
-    if (!notesDirHandle) return;
-
-    notesFiles = [];
-    const notesListEl = document.getElementById('notesList');
-    notesListEl.innerHTML = '';
-
-    try {
-        for await (const entry of notesDirHandle.values()) {
-            if (entry.kind === 'file' && entry.name.endsWith('.md')) {
-                try {
-                    const file = await entry.getFile();
-                    const content = await file.text();
-                    const { metadata } = parseFrontmatter(content);
-                    notesFiles.push({
-                        name: entry.name,
-                        handle: entry,
-                        metadata: metadata,
-                        filename: entry.name
-                    });
-                } catch (e) {
-                    console.warn('Skipping file', entry.name, e);
-                }
-            }
-        }
-
-        // Sort by date descending
-        notesFiles.sort((a, b) => {
-            return (b.metadata.date || '').localeCompare(a.metadata.date || '');
-        });
-
-        renderNotesList();
-    } catch (e) {
-        console.error(e);
-        notesListEl.innerHTML = `<div class="p-4 text-red-500 text-sm">加载失败: ${e.message}</div>`;
-    }
-}
-
-// === RENDER NOTES LIST ===
-function renderNotesList() {
-    const notesListEl = document.getElementById('notesList');
-    let filtered = notesFiles;
-    if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        filtered = filtered.filter(n =>
-            (n.metadata.title || '').toLowerCase().includes(q) ||
-            (n.metadata.excerpt || '').toLowerCase().includes(q) ||
-            (n.filename || '').toLowerCase().includes(q)
-        );
-    }
-
-    if (filtered.length === 0) {
-        notesListEl.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">未找到笔记</div>';
-        return;
-    }
-
-    notesListEl.innerHTML = filtered.map(note => {
-        const isActive = currentNote && currentNote.filename === note.filename;
-        const badgeClass = note.metadata.publish ? 'badge-published' : 'badge-draft';
-        const badgeText = note.metadata.publish ? '已发布' : '草稿';
-        return `
-            <div class="note-item ${isActive ? 'active' : ''} p-3 cursor-pointer" onclick="openNote('${escapeHtml(note.filename)}')">
-                <div class="flex items-start justify-between mb-1">
-                    <div class="font-medium text-gray-800 text-sm truncate pr-2">${escapeHtml(note.metadata.title || note.filename)}</div>
-                    <span class="px-2 py-0.5 rounded-full text-xs ${badgeClass}">${badgeText}</span>
-                </div>
-                <div class="text-xs text-gray-400 mb-1">${escapeHtml(note.metadata.date || '无日期')}</div>
-                <div class="text-xs text-gray-500 line-clamp-1">${escapeHtml(note.metadata.excerpt || '')}</div>
-            </div>
-        `;
-    }).join('');
-}
-
-function filterNotes() {
-    searchQuery = document.getElementById('searchInput').value.trim();
-    renderNotesList();
-}
-window.filterNotes = filterNotes;
-
-// === NEW NOTE ===
-function newNote() {
-    const today = new Date().toISOString().split('T')[0];
-    currentNote = {
-        metadata: {
-            title: '',
-            date: today,
-            excerpt: '',
-            publish: false,
-            tags: ''
-        },
-        content: '',
-        filename: ''
-    };
-    currentFileHandle = null;
-
-    // Fill form
-    document.getElementById('currentNoteTitle').textContent = '新建笔记';
-    document.getElementById('metaTitle').value = currentNote.metadata.title;
-    document.getElementById('metaDate').value = currentNote.metadata.date;
-    document.getElementById('metaExcerpt').value = currentNote.metadata.excerpt;
-    document.getElementById('metaTags').value = currentNote.metadata.tags || '';
-    document.getElementById('publishCheck').checked = currentNote.metadata.publish;
-    document.getElementById('editorContent').value = '';
-    document.getElementById('editorContent').disabled = false;
-    document.getElementById('btnSave').disabled = false;
-    document.getElementById('btnPublishCurrent').disabled = true;
-    document.getElementById('btnDelete').disabled = true;
-    updatePreview();
-    renderNotesList();
-}
-window.newNote = newNote;
-
-// === OPEN NOTE ===
-async function openNote(filename) {
-    const note = notesFiles.find(n => n.name === filename);
-    if (!note) return;
-
-    try {
-        const file = await note.handle.getFile();
-        const content = await file.text();
-        const { metadata, body } = parseFrontmatter(content);
-
-        currentNote = {
-            metadata: metadata,
-            content: body,
-            filename: filename
+        const saveHandle = async h => {
+            const db = await getDB();
+            db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put(h, 'rootDir');
         };
-        currentFileHandle = note.handle;
+        const loadHandle = async () => {
+            const db = await getDB();
+            return new Promise(r => {
+                const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).get('rootDir');
+                req.onsuccess = () => r(req.result);
+            });
+        };
 
-        // Fill form
-        document.getElementById('currentNoteTitle').textContent = metadata.title || filename;
-        document.getElementById('metaTitle').value = metadata.title || '';
-        document.getElementById('metaDate').value = metadata.date || new Date().toISOString().split('T')[0];
-        document.getElementById('metaExcerpt').value = metadata.excerpt || '';
-        document.getElementById('metaTags').value = metadata.tags || '';
-        document.getElementById('publishCheck').checked = !!metadata.publish;
-        document.getElementById('editorContent').value = body.trim();
-        document.getElementById('editorContent').disabled = false;
-        document.getElementById('btnSave').disabled = false;
-        document.getElementById('btnPublishCurrent').disabled = false;
-        document.getElementById('btnDelete').disabled = false;
-
-        updatePreview();
-        renderNotesList();
-    } catch (e) {
-            console.error(e);
-            alert('打开笔记失败: ' + e.message);
-        }
-}
-window.openNote = openNote;
-
-// === UPDATE METADATA ===
-function updateMetadata() {
-    if (!currentNote) return;
-    currentNote.metadata.title = document.getElementById('metaTitle').value;
-    currentNote.metadata.date = document.getElementById('metaDate').value;
-    currentNote.metadata.excerpt = document.getElementById('metaExcerpt').value;
-    currentNote.metadata.tags = document.getElementById('metaTags').value;
-    currentNote.metadata.publish = document.getElementById('publishCheck').checked;
-    document.getElementById('currentNoteTitle').textContent = currentNote.metadata.title || '未命名';
-}
-window.updateMetadata = updateMetadata;
-
-// === EDITOR INPUT ===
-function onEditorInput() {
-    if (!currentNote) return;
-    currentNote.content = document.getElementById('editorContent').value;
-    updatePreview();
-}
-window.onEditorInput = onEditorInput;
-
-// === UPDATE PREVIEW ===
-function updatePreview() {
-    if (!currentNote || !window.marked) {
-        document.getElementById('previewArea').innerHTML = '<div class="text-gray-400 text-sm text-center mt-10">加载中...</div>';
-        return;
-    }
-    const html = window.marked.parse(currentNote.content || '');
-    document.getElementById('previewArea').innerHTML = `<div class="article-content">${html}</div>`;
-    // Render LaTeX formulas in preview
-    if (window.renderMathInElement) {
-        const previewEl = document.getElementById('previewArea');
-        renderMathInElement(previewEl, {
-            delimiters: [
-                {left: '$$', right: '$$', display: true},
-                {left: '$', right: '$', display: false},
-                {left: '\\(', right: '\\)', display: false},
-                {left: '\\[', right: '\\]', display: true}
-            ],
-            throwOnError: false
-        });
-    }
-}
-
-// === ESCAPE HTML ===
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// === GENERATE POST HTML ===
-function generatePostHtml(post) {
-    const contentHtml = window.marked ? window.marked.parse(post.content) : post.content;
-    let tagsHtml = '';
-    if (post.metadata.tags && post.metadata.tags.trim()) {
-        const tags = post.metadata.tags.split(',').map(t => t.trim()).filter(t => t);
-        tagsHtml = tags.map(t => `#${t}`).join(' ');
-    }
-
-    let html = POST_TEMPLATE
-        .replace(/{title}/g, escapeHtml(post.metadata.title || ''))
-        .replace(/{date}/g, escapeHtml(post.metadata.date || ''))
-        .replace(/{excerpt}/g, escapeHtml(post.metadata.excerpt || ''))
-        .replace(/{content}/g, contentHtml)
-        .replace(/{tagsHtml}/g, tagsHtml);
-
-    return html;
-}
-
-// === UPDATE WRITING INDEX ===
-async function updateWritingIndex(publishedPosts) {
-    try {
-        let indexHandle;
-        try {
-            indexHandle = await writingDirHandle.getFileHandle('index.html');
-        } catch (e) {
-            throw new Error('writing/index.html 不存在，请确保项目结构正确');
+        async function verifyPermission(handle) {
+            if (await handle.queryPermission({ mode: 'readwrite' }) === 'granted') return true;
+            return await handle.requestPermission({ mode: 'readwrite' }) === 'granted';
         }
 
-        const indexFile = await indexHandle.getFile();
-        const indexContent = await indexFile.text();
-
-        // Generate post items HTML
-        const postItems = publishedPosts.map(post => {
-            const slug = slugify(post.metadata.title);
-            return `                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="./${slug}.html">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">${escapeHtml(post.metadata.title)}</h2>
-                            <span class="text-xs text-gray-400">${escapeHtml(post.metadata.date || '')}</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">${escapeHtml(post.metadata.excerpt || '')}</p>
-                    </a>
-                </div>`;
-        }).join('\n');
-
-        if (postItems === '') {
-            postItems = '                <div class="text-center text-gray-400 py-10">暂无发布的文章</div>';
+        async function setupDirectories(handle) {
+            rootDirHandle = handle;
+            notesDirHandle = await rootDirHandle.getDirectoryHandle('notes', { create: true });
+            writingDirHandle = await rootDirHandle.getDirectoryHandle('writing', { create: true });
+            demoDirHandle = await rootDirHandle.getDirectoryHandle('demo', { create: true });
+            $('dirStatus').textContent = '已连接: ' + rootDirHandle.name;
+            ['btnNewNote', 'btnPublishAll', 'btnAddDemo'].forEach(id => $(id).disabled = false);
+            loadNotesList();
+            saveHandle(handle);
         }
 
-        // Match by container id
-        const pattern = /(<div class="space-y-6" id="postList">)[\s\S]*?(<\/div>\s*<\/main>)/;
-        const match = indexContent.match(pattern);
-
-        if (!match) {
-            throw new Error('无法找到文章列表容器 #postList，请检查 writing/index.html');
+        async function selectRootDir() {
+            try {
+                const handle = await window.showDirectoryPicker();
+                await setupDirectories(handle);
+            } catch (e) { console.error(e); }
         }
 
-        const newContent = indexContent.replace(pattern, `$1\n${postItems}\n$2`);
-
-        // Write back
-        const writable = await indexHandle.createWritable();
-        await writable.write(newContent);
-        await writable.close();
-    } catch (e) {
-        console.error(e);
-        throw new Error(`更新文章列表失败: ${e.message}`);
-    }
-}
-
-// === UPDATE SEARCH.JSON ===
-async function updateSearchJson(publishedPosts) {
-    try {
-        const searchIndex = publishedPosts.map(post => {
-            const slug = slugify(post.metadata.title);
-            return {
-                title: post.metadata.title,
-                url: `./writing/${slug}.html`,
-                excerpt: post.metadata.excerpt || '',
-                date: post.metadata.date || ''
-            };
+        // Auto-reconnect on load if handle exists
+        window.addEventListener('load', async () => {
+            const savedHandle = await loadHandle();
+            if (savedHandle) {
+                $('dirStatus').textContent = '点击「连接项目目录」恢复权限';
+                $('btnSelectRoot').textContent = '恢复 My_home 连接';
+                $('btnSelectRoot').onclick = async () => {
+                    if (await verifyPermission(savedHandle)) {
+                        await setupDirectories(savedHandle);
+                        $('btnSelectRoot').textContent = '连接项目目录';
+                        $('btnSelectRoot').onclick = selectRootDir;
+                    } else {
+                        selectRootDir();
+                    }
+                };
+            } else {
+                $('dirStatus').textContent = '未连接';
+                $('btnSelectRoot').onclick = selectRootDir;
+            }
+            switchTab('notes');
         });
 
-        // Sort by date descending
-        searchIndex.sort((a, b) => b.date.localeCompare(a.date));
-
-        const jsonContent = JSON.stringify(searchIndex, null, 4);
-        const searchHandle = await rootDirHandle.getFileHandle('search.json', { create: true });
-        const writable = await searchHandle.createWritable();
-        await writable.write(jsonContent);
-        await writable.close();
-    } catch (e) {
-        console.error(e);
-        throw new Error(`更新搜索索引失败: ${e.message}`);
-    }
-}
-
-// === PUBLISH CURRENT NOTE ===
-async function publishCurrentNote() {
-    if (!currentNote || !writingDirHandle) return;
-
-    try {
-        document.getElementById('publishStatus').textContent = '正在发布...';
-        document.getElementById('publishStatus').className = 'text-blue-500';
-
-        // Save first
-        await saveNote();
-
-        // Reload all notes for latest data
-        await loadNotesList();
-
-        // Generate HTML
-        const slug = slugify(currentNote.metadata.title);
-        const htmlContent = generatePostHtml({
-            metadata: currentNote.metadata,
-            content: currentNote.content
-        });
-
-        // Write to writing/
-        const fileHandle = await writingDirHandle.getFileHandle(`${slug}.html`, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(htmlContent);
-        await writable.close();
-
-        // Get all published posts for index update
-        const publishedPosts = notesFiles
-            .filter(n => n.metadata.publish);
-
-        await updateWritingIndex(publishedPosts);
-        await updateSearchJson(publishedPosts);
-        await updateDemoIndex();
-
-        document.getElementById('publishStatus').textContent = `✓ 已发布: ${slug}.html，Demo 列表已更新`;
-        document.getElementById('publishStatus').className = 'text-green-600';
-
-        alert('发布成功！刷新随笔页面和 Demo 页面即可看到更新。');
-    } catch (e) {
-        console.error(e);
-        document.getElementById('publishStatus').textContent = `✗ 发布失败: ${e.message}`;
-        document.getElementById('publishStatus').className = 'text-red-500';
-        alert('发布失败: ' + e.message);
-    }
-}
-window.publishCurrentNote = publishCurrentNote;
-
-// === PUBLISH ALL ===
-async function publishAll() {
-    if (!confirm('确认要重新发布所有标记为"发布"的笔记吗？')) return;
-
-    try {
-        document.getElementById('publishStatus').textContent = '正在批量发布...';
-        document.getElementById('publishStatus').className = 'text-blue-500';
-
-        const publishedPosts = [];
-
-        for (const noteFile of notesFiles) {
-            if (!noteFile.metadata.publish) continue;
-
-            // Read file content
-            const file = await noteFile.handle.getFile();
-            const content = await file.text();
-            const { metadata, body } = parseFrontmatter(content);
-
-            // Generate HTML
-            const slug = slugify(metadata.title);
-            const htmlContent = generatePostHtml({ metadata, content: body });
-
-            // Write
-            const fileHandle = await writingDirHandle.getFileHandle(`${slug}.html`, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(htmlContent);
-            await writable.close();
-
-            publishedPosts.push({ metadata, content: body });
-            console.log(`Published: ${slug}.html`);
-        }
-
-        // Clean up: remove HTML files for notes that are no longer published
-        await cleanupUnpublishedPosts();
-
-        // Update index and search
-        await updateWritingIndex(publishedPosts);
-        await updateSearchJson(publishedPosts);
-        await updateDemoIndex();
-
-        document.getElementById('publishStatus').textContent = `✓ 完成！共发布 ${publishedPosts.length} 篇文章，Demo 列表已更新`;
-        document.getElementById('publishStatus').className = 'text-green-600';
-        alert(`发布完成！共发布 ${publishedPosts.length} 篇文章，Demo 列表已更新`);
-    } catch (e) {
-        console.error(e);
-        document.getElementById('publishStatus').textContent = `✗ 发布失败: ${e.message}`;
-        document.getElementById('publishStatus').className = 'text-red-500';
-        alert('发布失败: ' + e.message);
-    }
-}
-window.publishAll = publishAll;
-
-// === SAVE NOTE ===
-async function saveNote() {
-    if (!notesDirHandle || !currentNote) return;
-
-    updateMetadata();
-
-    // Validate required fields
-    if (!currentNote.metadata.title || !currentNote.metadata.title.trim()) {
-        alert('请填写文章标题');
-        return;
-    }
-
-    // Check if we need to unpublish (was published but now unchecked)
-    const wasPublished = currentFileHandle && currentNote.metadata.publish === false;
-    let oldSlug = null;
-    if (wasPublished) {
-        // Get the slug from existing note
-        oldSlug = slugify(currentNote.metadata.title);
-    }
-
-    const slug = slugify(currentNote.metadata.title);
-    const filename = currentFileHandle ? currentNote.filename : `${slug}.md`;
-
-    // Combine full content
-    const fullContent = generateFrontmatter(currentNote.metadata) + (currentNote.content || '').trim() + '\n';
-
-    try {
-        let fileHandle;
-        if (currentFileHandle) {
-            // Overwrite existing file
-            const writable = await currentFileHandle.createWritable();
-            await writable.write(fullContent);
-            await writable.close();
-            fileHandle = currentFileHandle;
-        } else {
-            // Create new file
-            fileHandle = await notesDirHandle.getFileHandle(filename, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(fullContent);
-            await writable.close();
-            currentFileHandle = fileHandle;
-            currentNote.filename = filename;
-        }
-
-        // If was published but now is unpublished, remove the HTML file
-        if (oldSlug && wasPublished) {
-            await removePublishedPost(oldSlug);
-            // Update indexes
-            const publishedPosts = notesFiles
-                .filter(n => n.metadata.publish);
-            await updateWritingIndex(publishedPosts);
-            await updateSearchJson(publishedPosts);
-        }
-
-        document.getElementById('saveStatus').textContent = `✓ 已保存 ${filename} (${new Date().toLocaleTimeString()})`;
-        document.getElementById('saveStatus').className = 'text-green-600';
-        document.getElementById('btnPublishCurrent').disabled = false;
-
-        await loadNotesList();
-    } catch (e) {
-        console.error(e);
-        document.getElementById('saveStatus').textContent = `✗ 保存失败: ${e.message}`;
-        document.getElementById('saveStatus').className = 'text-red-500';
-        alert('保存失败: ' + e);
-    }
-}
-window.saveNote = saveNote;
-
-// === REMOVE PUBLISHED POST ===
-async function removePublishedPost(slug) {
-    if (!writingDirHandle) return;
-    try {
-        await writingDirHandle.removeEntry(`${slug}.html`);
-        console.log(`Removed published: ${slug}.html`);
-    } catch (e) {
-        // 文件不存在时忽略错误
-        console.log(`File ${slug}.html not found, skipping removal`);
-    }
-}
-
-// === CLEANUP UNPUBLISHED POSTS ===
-async function cleanupUnpublishedPosts() {
-    if (!writingDirHandle) return;
-
-    // 获取所有已发布的 slug
-    const publishedSlugs = notesFiles
-        .filter(n => n.metadata.publish)
-        .map(n => slugify(n.metadata.title));
-
-    // 遍历 writing 目录，删除不在发布列表中的 HTML 文件
-    try {
-        for await (const entry of writingDirHandle.values()) {
-            if (entry.kind === 'file' &&
-                entry.name.endsWith('.html') &&
-                entry.name !== 'index.html') {
-                const slug = entry.name.replace('.html', '');
-                if (!publishedSlugs.includes(slug)) {
-                    await writingDirHandle.removeEntry(entry.name);
-                    console.log(`Cleaned up stale: ${entry.name}`);
+        async function loadNotesList() {
+            notesFiles = [];
+            for await (const entry of notesDirHandle.values()) {
+                if (entry.name.endsWith('.md')) {
+                    const f = await entry.getFile();
+                    const { metadata } = parseFrontmatter(await f.text());
+                    notesFiles.push({ name: entry.name, handle: entry, metadata, filename: entry.name });
                 }
             }
+            notesFiles.sort((a, b) => (b.metadata.date || '').localeCompare(a.metadata.date || ''));
+            renderNotesList();
         }
-    } catch (e) {
-        console.warn('Cleanup incomplete:', e);
-    }
-}
 
-// === UPDATE DEMO INDEX ===
-async function updateDemoIndex() {
-    if (!demoDirHandle) return;
+        function renderNotesList() {
+            const query = $('searchInput').value.toLowerCase();
+            $('notesList').innerHTML = notesFiles.filter(n => n.metadata.title.toLowerCase().includes(query)).map(note => `
+                <div class="p-2 cursor-pointer text-sm rounded ${currentNote?.filename === note.filename ? 'bg-blue-50' : 'hover:bg-gray-50'}" onclick="window.dispatchEvent(new CustomEvent('open-note', {detail:'${note.filename}'}))">
+                    <div class="font-medium truncate">${escapeHtml(note.metadata.title || note.filename)}</div>
+                    <div class="text-[10px] text-gray-400">${note.metadata.date} ${note.metadata.publish ? '[已发布]' : ''}</div>
+                </div>`).join('');
+        }
 
-    try {
-        // Get all PDF files in demo folder
-        const demoFiles = [];
-        for await (const entry of demoDirHandle.values()) {
-            if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.pdf')) {
-                // Extract title from filename (remove extension, replace dashes/underscores with spaces)
-                let title = entry.name.replace(/\.pdf$/i, '');
-                // If filename starts with number like "01-", keep the order but display nicely
-                const displayTitle = title.replace(/^[\d]+\-/, '').replace(/[-_]/g, ' ');
-                demoFiles.push({
-                    filename: entry.name,
-                    title: displayTitle,
-                    sortKey: title.toLowerCase()
+        function parseFrontmatter(c) {
+            const m = c.match(/^\s*---([\s\S]*?)---/);
+            const meta = { title: '', date: '', excerpt: '', publish: false, tags: '' };
+            if (m) {
+                m[1].split('\n').forEach(l => {
+                    const [k, ...v] = l.split(':');
+                    if (k && v.length) {
+                        const key = k.trim(), val = v.join(':').trim();
+                        meta[key] = val === 'true' ? true : (val === 'false' ? false : val);
+                    }
                 });
             }
+            return { metadata: meta, body: m ? c.slice(m[0].length) : c };
         }
 
-        // Sort by filename (alphabetical order - user can control order with 01-, 02- prefixes)
-        demoFiles.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-
-        // Read existing demo index.html
-        const indexHandle = await demoDirHandle.getFileHandle('index.html');
-        const file = await indexHandle.getFile();
-        let content = await file.text();
-
-        // Generate demo items HTML
-        let demoItemsHtml;
-        if (demoFiles.length === 0) {
-            demoItemsHtml = `                <div class="p-10 text-center text-gray-400">
-                    暂无 Demo 文件
-                </div>`;
-        } else {
-            demoItemsHtml = demoFiles.map(demo => `                <div class="demo-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm fade-in">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-xl font-medium text-gray-800 mb-1">${escapeHtml(demo.title)}</h2>
-                            <p class="text-sm text-gray-500">${demo.filename}</p>
-                        </div>
-                        <a href="./${demo.filename}" target="_blank" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors">
-                            查看 PDF
-                        </a>
-                    </div>
-                </div>`).join('\n');
+        async function openNote(fn) {
+            const n = notesFiles.find(i => i.filename === fn);
+            const { metadata, body } = parseFrontmatter(await (await n.handle.getFile()).text());
+            currentNote = { metadata, content: body, filename: fn }; currentFileHandle = n.handle;
+            $('metaTitle').value = metadata.title; $('metaDate').value = metadata.date;
+            $('metaExcerpt').value = metadata.excerpt; $('metaTags').value = metadata.tags;
+            $('publishCheck').checked = !!metadata.publish; $('editorContent').value = body.trim();
+            $('editorContent').disabled = false; ['btnSaveNote', 'btnPublishCurrent', 'btnDeleteNote'].forEach(id => $(id).disabled = false);
+            updatePreview(); renderNotesList();
         }
 
-        // Replace content in #demoList
-        const pattern = /(<div class="space-y-4" id="demoList">)[\s\S]*?(<\/div>\s*<\/main>)/;
-        const match = content.match(pattern);
+        const updatePreview = () => {
+            $('previewArea').innerHTML = marked.parse($('editorContent').value);
+            if (window.renderMathInElement) renderMathInElement($('previewArea'), {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+        };
 
-        if (!match) {
-            console.warn('Could not find #demoList container in demo/index.html');
-            return;
+        async function saveNote() {
+            const meta = { title: $('metaTitle').value, date: $('metaDate').value, excerpt: $('metaExcerpt').value, tags: $('metaTags').value, publish: $('publishCheck').checked };
+            const content = $('editorContent').value;
+            const text = '---\n' + Object.entries(meta).map(([k,v])=>`${k}: ${v}`).join('\n') + '\n---\n\n' + content;
+            const handle = currentFileHandle || await notesDirHandle.getFileHandle(`${slugify(meta.title)}.md`, {create:true});
+            const w = await handle.createWritable(); await w.write(text); await w.close();
+            loadNotesList();
         }
 
-        const newContent = content.replace(pattern, `$1\n${demoItemsHtml}\n$2`);
-
-        // Write back
-        const writable = await indexHandle.createWritable();
-        await writable.write(newContent);
-        await writable.close();
-
-        console.log(`Demo index updated: ${demoFiles.length} files`);
-    } catch (e) {
-        console.error('Failed to update demo index:', e);
-    }
-}
-
-// === DELETE NOTE ===
-async function deleteNote() {
-    if (!currentFileHandle || !confirm('确认删除这篇笔记吗？删除后无法恢复。')) return;
-
-    try {
-        // 如果笔记已发布，先删除发布的 HTML 文件
-        if (currentNote && currentNote.metadata.publish) {
-            const slug = slugify(currentNote.metadata.title);
-            await removePublishedPost(slug);
+        async function publishNote() {
+            await saveNote();
+            const slug = slugify($('metaTitle').value);
+            const html = POST_TEMPLATE.replace(/{title}/g, escapeHtml($('metaTitle').value)).replace(/{date}/g, $('metaDate').value)
+                .replace(/{excerpt}/g, escapeHtml($('metaExcerpt').value)).replace(/{content}/g, marked.parse($('editorContent').value))
+                .replace(/{tagsHtml}/g, ($('metaTags').value || '').split(',').map(t=>`#${t.trim()}`).join(' '));
+            const w = await (await writingDirHandle.getFileHandle(`${slug}.html`, {create:true})).createWritable();
+            await w.write(html); await w.close();
+            await syncIndexes(); alert('发布成功');
         }
 
-        await notesDirHandle.removeEntry(currentFileHandle.name);
-        currentNote = null;
-        currentFileHandle = null;
-
-        document.getElementById('currentNoteTitle').textContent = '请选择或新建笔记';
-        document.getElementById('metaTitle').value = '';
-        document.getElementById('metaExcerpt').value = '';
-        document.getElementById('editorContent').value = '';
-        document.getElementById('editorContent').disabled = true;
-        document.getElementById('btnSave').disabled = true;
-        document.getElementById('btnPublishCurrent').disabled = true;
-        document.getElementById('btnDelete').disabled = true;
-        document.getElementById('previewArea').innerHTML = '<div class="text-gray-400 text-sm text-center mt-10">选择或新建笔记后在这里预览</div>';
-        document.getElementById('saveStatus').textContent = '';
-
-        await loadNotesList();
-
-        // 更新索引，移除已删除笔记
-        const publishedPosts = notesFiles
-            .filter(n => n.metadata.publish);
-        await updateWritingIndex(publishedPosts);
-        await updateSearchJson(publishedPosts);
-    } catch (e) {
-        console.error(e);
-        alert('删除失败: ' + e.message);
-    }
-}
-window.deleteNote = deleteNote;
-
-// === LOAD PROFILE ===
-async function loadProfile() {
-    if (!rootDirHandle) {
-        document.getElementById('profileStatus').textContent = '请先选择项目根目录';
-        document.getElementById('profileStatus').className = 'mt-3 text-sm text-yellow-500';
-        return;
-    }
-
-    try {
-        const profileDir = await rootDirHandle.getDirectoryHandle('profile');
-        const indexFileHandle = await profileDir.getFileHandle('index.html');
-        const file = await indexFileHandle.getFile();
-        const content = await file.text();
-
-        // Extract about content - safe matching with null check
-        let aboutContent = '';
-        const aboutMatch = content.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>\s*<\/div>\s*<div class="mt-8">/);
-        if (aboutMatch && aboutMatch[1]) {
-            aboutContent = aboutMatch[1].trim();
-        }
-        document.getElementById('profileContent').value = aboutContent;
-
-        // Extract name - with null check
-        const nameMatch = content.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
-        if (nameMatch && nameMatch[1]) {
-            document.getElementById('profileName').value = nameMatch[1].trim();
-        } else {
-            document.getElementById('profileName').value = '';
-        }
-
-        // Extract title - safe with null check
-        let titleContent = '';
-        const titleMatch = content.match(/<p class="text-gray-500 font-light">([\s\S]*?)<\/p>/);
-        if (titleMatch && titleMatch[1]) {
-            titleContent = titleMatch[1].trim();
-        }
-        document.getElementById('profileTitle').value = titleContent;
-
-        // Extract skills - safe parsing
-        const skillsMatch = content.match(/<div class="flex flex-wrap gap-2">([\s\S]*?)<\/div>/);
-        const skills = [];
-        if (skillsMatch && skillsMatch[1]) {
-            const skillRegex = /<span[^>]*>([^<]+)<\/span>/g;
-            let match;
-            while ((match = skillRegex.exec(skillsMatch[1])) !== null) {
-                if (match[1] && match[1].trim()) {
-                    skills.push(match[1].trim());
-                }
+        async function syncIndexes() {
+            const pub = [];
+            for await (const e of notesDirHandle.values()) {
+                const { metadata } = parseFrontmatter(await (await e.getFile()).text());
+                if (metadata.publish) pub.push({ metadata, slug: slugify(metadata.title) });
             }
-        }
-        document.getElementById('profileSkills').value = skills.join(', ');
-
-        document.getElementById('profileStatus').textContent = '已加载个人简介';
-        document.getElementById('profileStatus').className = 'mt-3 text-sm text-green-600';
-    } catch (e) {
-        console.error(e);
-        document.getElementById('profileStatus').textContent = `加载失败: ${e.message}`;
-        document.getElementById('profileStatus').className = 'mt-3 text-sm text-red-500';
-    }
-}
-window.loadProfile = loadProfile;
-
-// === SAVE PROFILE ===
-async function saveProfile() {
-    if (!rootDirHandle) {
-        alert('请先选择项目根目录');
-        return;
-    }
-
-    try {
-        const aboutContent = document.getElementById('profileContent').value;
-        const name = document.getElementById('profileName').value || '';
-        const title = document.getElementById('profileTitle').value || '';
-        const skillsText = document.getElementById('profileSkills').value || '';
-        const skills = skillsText.split(',').map(s => s.trim()).filter(s => s);
-
-        // Read existing file
-        const profileDir = await rootDirHandle.getDirectoryHandle('profile');
-        const indexFileHandle = await profileDir.getFileHandle('index.html');
-        const file = await indexFileHandle.getFile();
-        let content = await file.text();
-
-        // Replace name - safe replacement
-        content = content.replace(
-            /(<h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-2">)[\s\S]*?(<\/h1>)/,
-            `$1${name}$2`
-        );
-
-        // Replace title
-        content = content.replace(
-            /(<p class="text-gray-500 font-light">)[\s\S]*?(<\/p>)/,
-            `$1${title}$2`
-        );
-
-        // Replace about
-        content = content.replace(
-            /(<div class="text-gray-600 space-y-4 leading-relaxed">)[\s\S]*?(<\/div>\s*<\/div>\s*<div class="mt-8">)/,
-            `$1\n${aboutContent}\n$2`
-        );
-
-        // Replace skills
-        if (skills.length > 0) {
-            const skillsHtml = skills.map(s => `                        <span class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-600">${s}</span>\n`).join('');
-            content = content.replace(
-                /(<div class="flex flex-wrap gap-2">)[\s\S]*?(<\/div>)/,
-                `$1\n${skillsHtml}                    $2`
-            );
+            pub.sort((a,b) => b.metadata.date.localeCompare(a.metadata.date));
+            const search = pub.map(p => ({ title: p.metadata.title, url: `./writing/${p.slug}.html`, excerpt: p.metadata.excerpt, date: p.metadata.date }));
+            const sw = await (await rootDirHandle.getFileHandle('search.json', {create:true})).createWritable();
+            await sw.write(JSON.stringify(search, null, 2)); await sw.close();
         }
 
-        // Write back
-        const writable = await indexFileHandle.createWritable();
-        await writable.write(content);
-        await writable.close();
+        const switchTab = t => {
+            ['Notes', 'Demos', 'Profile'].forEach(i => {
+                $(`tab${i}`).className = i.toLowerCase() === t ? 'flex-1 py-3 text-sm font-medium tab-active' : 'flex-1 py-3 text-sm font-medium';
+                $(`panel${i}`).classList.toggle('hidden', i.toLowerCase() !== t);
+            });
+            if (t === 'profile' && rootDirHandle) loadProfile();
+            if (t === 'demos' && rootDirHandle) loadDemos();
+        };
 
-        document.getElementById('profileStatus').textContent = '✓ 保存成功！刷新页面即可看到更新';
-        document.getElementById('profileStatus').className = 'mt-3 text-sm text-green-600';
-        alert('保存成功！');
-    } catch (e) {
-        console.error(e);
-        document.getElementById('profileStatus').textContent = `✗ 保存失败: ${e.message}`;
-        document.getElementById('profileStatus').className = 'mt-3 text-sm text-red-500';
-        alert('保存失败: ' + e.message);
-    }
-}
-window.saveProfile = saveProfile;
+        async function loadDemos() {
+            const files = []; for await (const e of demoDirHandle.values()) if (e.name !== 'index.html') files.push(e.name);
+            $('demoFilesList').innerHTML = files.sort().map(f => `<div class="flex justify-between p-2 text-sm"><span>${f}</span><button class="text-red-400" onclick="window.dispatchEvent(new CustomEvent('del-demo',{detail:'${f}'}))">删除</button></div>`).join('');
+        }
+
+        async function loadProfile() {
+            const c = await (await (await (await rootDirHandle.getDirectoryHandle('profile')).getFileHandle('index.html')).getFile()).text();
+            $('profileName').value = c.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1].trim() || '';
+            $('profileTitle').value = c.match(/<p class="text-gray-500 font-light">([\s\S]*?)<\/p>/)?.[1].trim() || '';
+            $('profileContent').value = c.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>/)?.[1].trim() || '';
+        }
+
+        $('tabNotes').onclick = () => switchTab('notes');
+        $('tabDemos').onclick = () => switchTab('demos');
+        $('tabProfile').onclick = () => switchTab('profile');
+        $('btnSaveNote').onclick = saveNote;
+        $('btnPublishCurrent').onclick = publishNote;
+        $('btnNewNote').onclick = () => {
+            currentNote = null; currentFileHandle = null;
+            $('metaTitle').value = ''; $('editorContent').value = ''; $('editorContent').disabled = false;
+        };
+        $('editorContent').oninput = updatePreview;
+        $('searchInput').oninput = renderNotesList;
+        window.addEventListener('open-note', e => openNote(e.detail));
+        window.addEventListener('del-demo', async e => { if(confirm('删除?')){ await demoDirHandle.removeEntry(e.detail); loadDemos(); } });
+
     </script>
 </body>
 </html>

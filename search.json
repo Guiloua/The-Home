@@ -1,8 +1,14 @@
 [
-    {
-        "title": "Hellow world",
-        "url": "./writing/look this world.html",
-        "excerpt": "Neko tochs this world firstly",
-        "date": "2026-04-02"
-    }
+  {
+    "title": "LaTeX 公式测试",
+    "url": "./writing/latex-.html",
+    "excerpt": "测试个人主页的 LaTeX 公式渲染效果，包括行内公式和块级公式。",
+    "date": "2026-05-01"
+  },
+  {
+    "title": "Hellow world",
+    "url": "./writing/hellow-world.html",
+    "excerpt": "Neko tochs this world firstly",
+    "date": "2026-04-02"
+  }
 ]

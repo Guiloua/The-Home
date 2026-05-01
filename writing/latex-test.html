@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX 公式测试 | 个人主页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- KaTeX for LaTeX formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+    });"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 fade-in" style="animation-delay: 0.1s">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="../index.html" class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">Me</a>
+                </div>
+
+                <!-- 导航菜单 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="../writing/index.html" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">随笔</a>
+                    <a href="../profile/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">简介</a>
+                    <a href="../demo/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">Demo</a>
+                </div>
+
+                <!-- 搜索框 -->
+                <div class="relative search-container">
+                    <div class="flex items-center bg-gray-50 rounded-full px-3 py-1.5 border border-gray-100 hover:border-gray-200 transition-all">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0z"/>
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="搜索随笔..."
+                            class="search-input bg-transparent ml-2 w-24 md:w-32 text-sm text-gray-700 placeholder-gray-400 focus:w-32 md:focus:w-48 transition-all duration-300"
+                            id="searchInput"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div id="searchResults" class="absolute top-full right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-100 hidden max-h-80 overflow-y-auto z-50">
+                        <div id="searchContent"></div>
+                    </div>
+                </div>
+
+                <!-- 移动端菜单按钮 -->
+                <button class="md:hidden flex items-center" id="mobileMenuBtn">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 文章内容 -->
+    <main class="pt-24 pb-16 px-4">
+        <article class="max-w-2xl mx-auto fade-in" style="animation-delay: 0.2s">
+            <!-- 文章头部 -->
+            <header class="mb-10 text-center">
+                <div class="text-sm text-gray-400 mb-3 font-light">2026-05-01</div>
+                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">LaTeX 公式测试</h1>
+                <p class="text-gray-500 text-lg font-light">测试个人主页的 LaTeX 公式渲染效果，包括行内公式和块级公式。</p>
+            </header>
+
+            <!-- 文章正文 -->
+            <div class="article-content text-gray-700 text-base leading-relaxed">
+                <p>这是一篇用于测试 KaTeX 渲染效果的随笔。</p>
+
+                <h2>1. 行内公式 (Inline)</h2>
+                <p>能量动量关系：$E^2 = (pc)^2 + (m_0c^2)^2$。</p>
+                <p>勾股定理：$a^2 + b^2 = c^2$。</p>
+
+                <h2>2. 块级公式 (Display)</h2>
+                <p>麦克斯韦方程组（微分形式）：</p>
+                $$
+                \begin{cases}
+                \nabla \cdot \mathbf{E} = \frac{\rho}{\varepsilon_0} \\
+                \nabla \cdot \mathbf{B} = 0 \\
+                \nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t} \\
+                \nabla \times \mathbf{B} = \mu_0\mathbf{J} + \mu_0\varepsilon_0\frac{\partial \mathbf{E}}{\partial t}
+                \end{cases}
+                $$
+
+                <p>高斯积分：</p>
+                $$ \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi} $$
+
+                <h2>3. 复杂矩阵与对齐</h2>
+                $$
+                \mathbf{A} = \begin{pmatrix}
+                a_{11} & a_{12} & \cdots & a_{1n} \\
+                a_{21} & a_{22} & \cdots & a_{2n} \\
+                \vdots & \vdots & \ddots & \vdots \\
+                a_{m1} & a_{m2} & \cdots & a_{mn}
+                \end{pmatrix}
+                $$
+
+                <p>如果这些公式都能正常显示，说明配置成功！</p>
+            </div>
+
+            <!-- 文章底部 -->
+            <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">
+                <div class="flex items-center justify-between">
+                    <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
+                    <span>#测试 #LaTeX</span>
+                </div>
+            </footer>
+        </article>
+    </main>
+
+    <script>
+        // 搜索功能相关脚本（从模板复制）
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchContent = document.getElementById('searchContent');
+        let posts = [];
+        fetch('../search.json').then(r => r.json()).then(d => { posts = d; });
+        function performSearch(query) {
+            if (!query.trim()) { searchResults.classList.add('hidden'); return; }
+            const lowerQuery = query.toLowerCase();
+            const results = posts.filter(post => post.title.toLowerCase().includes(lowerQuery) || post.excerpt.toLowerCase().includes(lowerQuery));
+            displayResults(results, lowerQuery);
+        }
+        function displayResults(results, query) {
+            if (results.length === 0) {
+                searchContent.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">未找到相关内容</div>';
+            } else {
+                searchContent.innerHTML = results.map(post => `
+                    <a href="../${post.url}" class="block px-4 py-3 border-b border-gray-50">
+                        <div class="font-medium text-gray-800 text-sm mb-1">${post.title}</div>
+                        <div class="text-xs text-gray-500 line-clamp-1">${post.excerpt}</div>
+                    </a>
+                `).join('');
+            }
+            searchResults.classList.remove('hidden');
+        }
+        searchInput.addEventListener('input', () => performSearch(searchInput.value));
+    </script>
+</body>
+</html>

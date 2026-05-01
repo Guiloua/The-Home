@@ -8,8 +8,16 @@
     <link rel="stylesheet" href="../css/style.css">
     <!-- KaTeX for LaTeX formulas -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+    });"></script>
 </head>
 <body>
     <!-- 导航栏 -->
@@ -221,35 +229,6 @@
                 performSearch(searchInput.value);
             }}
         }});
-
-        // Render LaTeX formulas with KaTeX after scripts are loaded
-        function renderLaTeX() {{
-            if (window.renderMathInElement) {{
-                renderMathInElement(document.body, {{
-                    delimiters: [
-                        {{left: '$$', right: '$$', display: true}},
-                        {{left: '$', right: '$', display: false}},
-                        {{left: '\\(', right: '\\)', display: false}},
-                        {{left: '\\[', right: '\\]', display: true}}
-                    ],
-                    throwOnError: false
-                }});
-            }} else {{
-                // If not loaded yet, retry after a short delay
-                setTimeout(renderLaTeX, 100);
-            }}
-        }}
-
-        // Try to render when everything is ready
-        if (document.readyState === 'complete') {{
-            renderLaTeX();
-        }} else if (document.readyState === 'loading') {{
-            document.addEventListener('DOMContentLoaded', function() {{
-                setTimeout(renderLaTeX, 50);
-            }});
-        }} else {{
-            setTimeout(renderLaTeX, 50);
-        }}
     </script>
 </body>
 </html>

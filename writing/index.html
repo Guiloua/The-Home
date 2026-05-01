@@ -6,6 +6,18 @@
     <title>随笔 | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/style.css">
+    <!-- KaTeX for LaTeX formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+    });"></script>
 </head>
 <body>
     <!-- 导航栏 -->
@@ -72,6 +84,15 @@
             </header>
 
             <div class="space-y-6" id="postList">
+                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                    <a href="./latex-test.html">
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">LaTeX 公式测试</h2>
+                            <span class="text-xs text-gray-400">2026-05-01</span>
+                        </div>
+                        <p class="text-gray-500 text-sm line-clamp-2">测试个人主页的 LaTeX 公式渲染效果，包括行内公式和块级公式。</p>
+                    </a>
+                </div>
                 <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                     <a href="./look this world.html">
                         <div class="flex items-center justify-between mb-2">
