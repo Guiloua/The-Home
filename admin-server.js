@@ -55,7 +55,7 @@ const server = http.createServer((req, res) => {
             if (action === 'commit') {
                 command = `git add . && git commit -m "${message || 'Update from admin'}"`;
             } else if (action === 'push') {
-                command = `git push`;
+                command = `git push -u origin main`;
             }
 
             console.log(`执行命令: ${command}`);
