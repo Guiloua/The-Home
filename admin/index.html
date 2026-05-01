@@ -13,22 +13,19 @@
         .tab-active { background-color: #f3f4f6; border-bottom: 2px solid #3b82f6; color: #1d4ed8; }
         .note-item.active { background-color: #eff6ff; border-left: 4px solid #3b82f6; }
         .editor-textarea { resize: none; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-        .preview-content h1 { font-size: 1.875rem; font-weight: 700; margin: 1.5rem 0 1rem; }
         .preview-content h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; }
         .preview-content p { margin-bottom: 1rem; line-height: 1.6; color: #374151; }
-        .preview-content code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
-        .preview-content pre { background: #1f2937; color: white; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0; }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col">
-    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-20">
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-20 shadow-sm">
         <div class="flex items-center space-x-4">
             <h1 class="font-semibold text-gray-800">管理后台</h1>
             <div id="dirStatus" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">正在检查权限...</div>
         </div>
         <div class="flex items-center space-x-3">
-            <button id="btnGitCommit" class="px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md hover:bg-black disabled:opacity-50">Git 备份</button>
-            <button id="btnGitPush" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700 disabled:opacity-50">Git 推送</button>
+            <button id="btnGitCommit" class="px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md hover:bg-black disabled:opacity-50" disabled>Git 备份</button>
+            <button id="btnGitPush" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700 disabled:opacity-50" disabled>Git 推送</button>
             <div class="h-6 w-px bg-gray-200"></div>
             <button id="btnSelectRoot" class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">连接项目目录</button>
             <button onclick="window.open('../index.html', '_blank')" class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">预览主页</button>
@@ -44,23 +41,36 @@
             </nav>
             <div class="flex-1 overflow-y-auto">
                 <div id="panelNotes" class="p-3 space-y-3">
-                    <input type="text" id="searchInput" placeholder="搜索随笔..." class="w-full px-3 py-2 border rounded-md text-sm">
+                    <input type="text" id="searchInput" placeholder="搜索随笔..." class="w-full px-3 py-2 border rounded-md text-sm focus:ring-1 focus:ring-blue-500 outline-none">
                     <div class="flex space-x-2">
-                        <button id="btnNewNote" class="flex-1 py-2 bg-green-500 text-white text-xs rounded disabled:opacity-50">新建</button>
-                        <button id="btnPublishAll" class="flex-1 py-2 bg-purple-500 text-white text-xs rounded disabled:opacity-50">全站同步</button>
+                        <button id="btnNewNote" class="flex-1 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50" disabled>新建随笔</button>
+                        <button id="btnPublishAll" class="flex-1 py-2 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 disabled:opacity-50" disabled>全站同步</button>
                     </div>
                     <div id="notesList" class="space-y-1"></div>
                 </div>
                 <div id="panelDemos" class="hidden p-3 space-y-3">
-                    <button id="btnAddDemo" class="w-full py-2 bg-blue-500 text-white text-xs rounded disabled:opacity-50">添加 Demo 文件</button>
+                    <button id="btnAddDemo" class="w-full py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50" disabled>添加 Demo 文件</button>
                     <div id="demoFilesList" class="space-y-1"></div>
                 </div>
                 <div id="panelProfile" class="hidden p-4 space-y-4">
-                    <input type="text" id="profileName" placeholder="姓名" class="w-full px-3 py-2 border rounded text-sm">
-                    <input type="text" id="profileTitle" placeholder="头衔" class="w-full px-3 py-2 border rounded text-sm">
-                    <textarea id="profileContent" placeholder="简介" class="w-full h-32 px-3 py-2 border rounded text-sm editor-textarea"></textarea>
-                    <input type="text" id="profileSkills" placeholder="技能 (逗号分隔)" class="w-full px-3 py-2 border rounded text-sm">
-                    <button id="btnSaveProfile" class="w-full py-2 bg-blue-600 text-white text-sm rounded">保存简介</button>
+                    <!-- Profile inputs unchanged -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">姓名</label>
+                        <input type="text" id="profileName" class="w-full px-3 py-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">头衔</label>
+                        <input type="text" id="profileTitle" class="w-full px-3 py-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">简介 (支持 HTML)</label>
+                        <textarea id="profileContent" class="w-full h-32 px-3 py-2 border rounded text-sm editor-textarea"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">技能 (逗号分隔)</label>
+                        <input type="text" id="profileSkills" class="w-full px-3 py-2 border rounded text-sm">
+                    </div>
+                    <button id="btnSaveProfile" class="w-full py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 shadow-sm">保存简介修改</button>
                     <div id="profileStatus" class="text-center text-xs mt-2"></div>
                 </div>
             </div>
@@ -70,20 +80,20 @@
             <div class="h-14 border-b border-gray-200 flex items-center justify-between px-6">
                 <h2 id="currentNoteTitle" class="font-medium text-gray-700">未选择随笔</h2>
                 <div class="flex items-center space-x-4">
-                    <label class="flex items-center space-x-2 text-sm"><input type="checkbox" id="publishCheck"> <span>发布</span></label>
-                    <button id="btnSaveNote" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded disabled:opacity-50">保存</button>
-                    <button id="btnPublishCurrent" class="px-4 py-1.5 bg-purple-500 text-white text-xs rounded disabled:opacity-50">发布</button>
-                    <button id="btnDeleteNote" class="px-4 py-1.5 bg-red-100 text-red-600 text-xs rounded disabled:opacity-50">删除</button>
+                    <label class="flex items-center space-x-2 text-sm cursor-pointer"><input type="checkbox" id="publishCheck"> <span>发布到网站</span></label>
+                    <button id="btnSaveNote" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded disabled:opacity-50" disabled>保存</button>
+                    <button id="btnPublishCurrent" class="px-4 py-1.5 bg-purple-500 text-white text-xs rounded disabled:opacity-50" disabled>发布</button>
+                    <button id="btnDeleteNote" class="px-4 py-1.5 bg-red-100 text-red-600 text-xs rounded disabled:opacity-50" disabled>删除</button>
                 </div>
             </div>
             <div id="metaArea" class="p-4 bg-gray-50 grid grid-cols-2 gap-4 border-b">
-                <input type="text" id="metaTitle" placeholder="标题" class="px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaTitle" placeholder="文章标题" class="px-3 py-2 border rounded text-sm">
                 <input type="date" id="metaDate" class="px-3 py-2 border rounded text-sm">
-                <input type="text" id="metaExcerpt" placeholder="摘要" class="col-span-2 px-3 py-2 border rounded text-sm">
-                <input type="text" id="metaTags" placeholder="标签" class="col-span-2 px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaExcerpt" placeholder="摘要简介" class="col-span-2 px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaTags" placeholder="标签 (逗号分隔)" class="col-span-2 px-3 py-2 border rounded text-sm">
             </div>
             <div class="flex-1 flex overflow-hidden">
-                <textarea id="editorContent" class="w-1/2 p-6 border-r focus:outline-none editor-textarea text-base" placeholder="开始创作你的 Markdown 内容..." disabled></textarea>
+                <textarea id="editorContent" class="w-1/2 p-6 border-r focus:outline-none editor-textarea" disabled placeholder="Markdown 内容..."></textarea>
                 <div id="previewArea" class="w-1/2 p-6 overflow-y-auto preview-content"></div>
             </div>
             <footer class="h-10 border-t border-gray-100 flex items-center px-4 justify-between bg-gray-50 text-[10px] text-gray-500">
@@ -97,7 +107,7 @@
         import { marked } from 'https://cdn.jsdelivr.net/npm/marked@11/lib/marked.esm.js';
 
         let rootDirHandle, notesDirHandle, writingDirHandle, demoDirHandle;
-        let notesFiles = [], currentNote = null, currentFileHandle = null;
+        let notesFiles = [], currentNote = null, currentFileHandle = null, currentTab = 'notes';
 
         const $ = id => document.getElementById(id);
         const escapeHtml = t => { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; };
@@ -111,8 +121,8 @@
     <script src="https://cdn.tailwindcss.com"><\/script>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false},{left: '\\\\(', right: '\\\\)', display: false},{left: '\\\\[', right: '\\\\]', display: true}], throwOnError: false})"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
 </head>
 <body>
     <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
@@ -135,9 +145,21 @@
             <span>{tagsHtml}</span>
         </footer>
     </article>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\\\(', right: '\\\\)', display: false},
+                    {left: '\\\\[', right: '\\\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        });
+    <\/script>
 </body></html>`;
 
-        // IndexedDB for handle persistence
         const DB_NAME = 'NekoChanAdmin';
         const STORE_NAME = 'Handles';
         const getDB = () => new Promise(r => {
@@ -145,17 +167,8 @@
             req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
             req.onsuccess = () => r(req.result);
         });
-        const saveHandle = async h => {
-            const db = await getDB();
-            db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put(h, 'rootDir');
-        };
-        const loadHandle = async () => {
-            const db = await getDB();
-            return new Promise(r => {
-                const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).get('rootDir');
-                req.onsuccess = () => r(req.result);
-            });
-        };
+        const saveHandle = async h => { const db = await getDB(); db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put(h, 'rootDir'); };
+        const loadHandle = async () => { const db = await getDB(); return new Promise(r => { const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).get('rootDir'); req.onsuccess = () => r(req.result); }); };
 
         async function verifyPermission(handle) {
             if (await handle.queryPermission({ mode: 'readwrite' }) === 'granted') return true;
@@ -169,35 +182,20 @@
             demoDirHandle = await rootDirHandle.getDirectoryHandle('demo', { create: true });
             $('dirStatus').textContent = '已连接: ' + rootDirHandle.name;
             ['btnNewNote', 'btnPublishAll', 'btnAddDemo', 'btnGitCommit', 'btnGitPush'].forEach(id => $(id).disabled = false);
-            loadNotesList();
-            saveHandle(handle);
+            loadNotesList(); loadDemos(); loadProfile(); saveHandle(handle);
         }
 
-        async function selectRootDir() {
-            try {
-                const handle = await window.showDirectoryPicker();
-                await setupDirectories(handle);
-            } catch (e) { console.error(e); }
-        }
+        async function selectRootDir() { try { const handle = await window.showDirectoryPicker(); await setupDirectories(handle); } catch (e) { console.error(e); } }
 
         window.addEventListener('load', async () => {
             const savedHandle = await loadHandle();
             if (savedHandle) {
-                $('dirStatus').textContent = '点击「连接项目目录」恢复权限';
-                $('btnSelectRoot').textContent = '恢复 My_home 连接';
+                $('dirStatus').textContent = '点击连接恢复 My_home';
                 $('btnSelectRoot').onclick = async () => {
-                    if (await verifyPermission(savedHandle)) {
-                        await setupDirectories(savedHandle);
-                        $('btnSelectRoot').textContent = '连接项目目录';
-                        $('btnSelectRoot').onclick = selectRootDir;
-                    } else {
-                        selectRootDir();
-                    }
+                    if (await verifyPermission(savedHandle)) await setupDirectories(savedHandle);
+                    else selectRootDir();
                 };
-            } else {
-                $('dirStatus').textContent = '未连接';
-                $('btnSelectRoot').onclick = selectRootDir;
-            }
+            } else { $('btnSelectRoot').onclick = selectRootDir; }
             switchTab('notes');
         });
 
@@ -218,7 +216,7 @@
         function renderNotesList() {
             const query = $('searchInput').value.toLowerCase();
             $('notesList').innerHTML = notesFiles.filter(n => (n.metadata.title || n.name).toLowerCase().includes(query)).map(note => `
-                <div class="note-item p-2 cursor-pointer text-sm rounded ${currentNote?.filename === note.filename ? 'active' : 'hover:bg-gray-50'}" onclick="window.dispatchEvent(new CustomEvent('open-note', {detail:'${note.filename}'}))">
+                <div class="p-2 cursor-pointer text-sm rounded ${currentNote?.filename === note.filename ? 'active' : 'hover:bg-gray-50'}" onclick="window.dispatchEvent(new CustomEvent('open-note', {detail:'${note.filename}'}))">
                     <div class="font-medium truncate">${escapeHtml(note.metadata.title || note.filename)}</div>
                     <div class="text-[10px] text-gray-400">${note.metadata.date || ''} ${note.metadata.publish ? '[已发布]' : ''}</div>
                 </div>`).join('');
@@ -227,18 +225,13 @@
         function parseFrontmatter(c) {
             const m = c.match(/^\s*---([\s\S]*?)---/);
             const meta = { title: '', date: '', excerpt: '', publish: false, tags: '' };
-            let body = c;
             if (m) {
-                body = c.slice(m[0].length);
                 m[1].split('\n').forEach(l => {
                     const [k, ...v] = l.split(':');
-                    if (k && v.length) {
-                        const key = k.trim(), val = v.join(':').trim();
-                        meta[key] = val === 'true' ? true : (val === 'false' ? false : val);
-                    }
+                    if (k && v.length) { meta[k.trim()] = v.join(':').trim() === 'true' ? true : (v.join(':').trim() === 'false' ? false : v.join(':').trim()); }
                 });
             }
-            return { metadata: meta, body: body.trim() };
+            return { metadata: meta, body: m ? c.slice(m[0].length).trim() : c.trim() };
         }
 
         async function openNote(fn) {
@@ -247,7 +240,6 @@
             const file = await n.handle.getFile();
             const { metadata, body } = parseFrontmatter(await file.text());
             currentNote = { metadata, content: body, filename: fn }; currentFileHandle = n.handle;
-            $('currentNoteTitle').textContent = metadata.title || fn;
             $('metaTitle').value = metadata.title; $('metaDate').value = metadata.date;
             $('metaExcerpt').value = metadata.excerpt; $('metaTags').value = metadata.tags;
             $('publishCheck').checked = !!metadata.publish; $('editorContent').value = body;
@@ -255,79 +247,107 @@
             updatePreview(); renderNotesList();
         }
 
-        function updatePreview() {
-            const content = $('editorContent').value;
-            $('previewArea').innerHTML = `<div class="article-content">${marked.parse(content)}</div>`;
-            if (window.renderMathInElement) {
-                renderMathInElement($('previewArea'), {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false});
-            }
+        function protectLatex(text) {
+            const blocks = []; let idx = 0;
+            // 使用不会被 Markdown 解析的占位符（避免使用下划线）
+            text = text.replace(/\$\$([\s\S]*?)\$\$/g, (m, content) => {
+                const id = `MATHBLOCK${idx}MATH`;
+                blocks.push({ id, content: `$$${content}$$` }); idx++; return id;
+            });
+            text = text.replace(/\$([^\$\n]+?)\$/g, (m, content) => {
+                const id = `MATHINLINE${idx}MATH`;
+                blocks.push({ id, content: `$${content}$` }); idx++; return id;
+            });
+            return { text, blocks };
         }
+        function restoreLatex(html, blocks) {
+            // 按索引降序替换，防止出现 MATHBLOCK10 包含 MATHBLOCK1 的情况（虽然此处有 MATH 结尾，但降序更稳健）
+            const sortedBlocks = [...blocks].sort((a, b) => b.id.length - a.id.length);
+            sortedBlocks.forEach(b => {
+                // 使用 split/join 实现全局替换
+                html = html.split(b.id).join(b.content);
+            });
+            return html;
+        }
+        function parseMarkdownWithLatex(text) {
+            const { text: pt, blocks } = protectLatex(text);
+            const html = marked.parse(pt);
+            return restoreLatex(html, blocks);
+        }
+        const updatePreview = () => {
+            $('previewArea').innerHTML = `<div class="article-content">${parseMarkdownWithLatex($('editorContent').value)}</div>`;
+            if (window.renderMathInElement) renderMathInElement($('previewArea'), {delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false});
+        };
 
         async function saveNote() {
             if (!notesDirHandle) return;
             const meta = { title: $('metaTitle').value, date: $('metaDate').value, excerpt: $('metaExcerpt').value, tags: $('metaTags').value, publish: $('publishCheck').checked };
-            const content = $('editorContent').value;
-            const text = '---\n' + Object.entries(meta).map(([k,v])=>`${k}: ${v}`).join('\n') + '\n---\n\n' + content;
-            const filename = currentFileHandle?.name || `${slugify(meta.title)}.md`;
-            const handle = currentFileHandle || await notesDirHandle.getFileHandle(filename, {create:true});
-            const w = await handle.createWritable(); await w.write(text); await w.close();
-            $('saveStatus').textContent = '✓ 已保存 ' + filename;
-            await loadNotesList();
-            if (!currentFileHandle) await openNote(filename);
+            const text = '---\n' + Object.entries(meta).map(([k,v])=>`${k}: ${v}`).join('\n') + '\n---\n\n' + $('editorContent').value;
+            const fn = currentFileHandle?.name || `${slugify(meta.title)}.md`;
+            const h = currentFileHandle || await notesDirHandle.getFileHandle(fn, {create:true});
+            const w = await h.createWritable(); await w.write(text); await w.close();
+            $('saveStatus').textContent = '✓ 已保存 ' + fn;
+            await loadNotesList(); if (!currentFileHandle) await openNote(fn);
         }
 
         async function publishNote() {
-            try {
-                await saveNote();
-                const slug = slugify($('metaTitle').value);
-                const html = POST_TEMPLATE.replace(/{title}/g, escapeHtml($('metaTitle').value)).replace(/{date}/g, $('metaDate').value)
-                    .replace(/{excerpt}/g, escapeHtml($('metaExcerpt').value)).replace(/{content}/g, marked.parse($('editorContent').value))
-                    .replace(/{tagsHtml}/g, ($('metaTags').value || '').split(',').map(t=>`#${t.trim()}`).join(' '));
-                const w = await (await writingDirHandle.getFileHandle(`${slug}.html`, {create:true})).createWritable();
-                await w.write(html); await w.close();
-                await syncIndexes(); 
-                $('publishStatus').textContent = '✓ 发布成功';
-                alert('发布成功');
-            } catch (e) {
-                console.error(e);
-                alert('发布失败: ' + e.message);
-            }
+            await saveNote();
+            const slug = slugify($('metaTitle').value);
+            const html = POST_TEMPLATE.replace(/{title}/g, escapeHtml($('metaTitle').value)).replace(/{date}/g, $('metaDate').value).replace(/{excerpt}/g, escapeHtml($('metaExcerpt').value)).replace(/{content}/g, parseMarkdownWithLatex($('editorContent').value)).replace(/{tagsHtml}/g, ($('metaTags').value || '').split(',').map(t=>`#${t.trim()}`).join(' '));
+            const w = await (await writingDirHandle.getFileHandle(`${slug}.html`, {create:true})).createWritable();
+            await w.write(html); await w.close();
+            await syncIndexes();
+            alert('发布成功');
         }
 
         async function syncIndexes() {
             const pub = [];
             for await (const e of notesDirHandle.values()) {
-                if (e.kind === 'file' && e.name.endsWith('.md')) {
-                    const f = await e.getFile();
-                    const { metadata } = parseFrontmatter(await f.text());
+                if (e.name.endsWith('.md')) {
+                    const { metadata } = parseFrontmatter(await (await e.getFile()).text());
                     if (metadata.publish) pub.push({ metadata, slug: slugify(metadata.title) });
                 }
             }
             pub.sort((a,b) => (b.metadata.date || '').localeCompare(a.metadata.date || ''));
-            
-            // Update search.json
-            const searchIndex = pub.map(p => ({ title: p.metadata.title, url: `./writing/${p.slug}.html`, excerpt: p.metadata.excerpt, date: p.metadata.date }));
+            const search = pub.map(p => ({ title: p.metadata.title, url: `./writing/${p.slug}.html`, excerpt: p.metadata.excerpt, date: p.metadata.date }));
             const sw = await (await rootDirHandle.getFileHandle('search.json', {create:true})).createWritable();
-            await sw.write(JSON.stringify(searchIndex, null, 2)); await sw.close();
+            await sw.write(JSON.stringify(search, null, 2)); await sw.close();
+            const ih = await writingDirHandle.getFileHandle('index.html');
+            let ic = await (await ih.getFile()).text();
+            const items = pub.map(p => `<div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm"><a href="./${p.slug}.html"><div class="flex items-center justify-between mb-2"><h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">${escapeHtml(p.metadata.title)}</h2><span class="text-xs text-gray-400">${p.metadata.date}</span></div><p class="text-gray-500 text-sm line-clamp-2">${escapeHtml(p.metadata.excerpt)}</p></a></div>`).join('\n');
+            const newIc = ic.replace(/(<div class="space-y-6" id="postList">)[\s\S]*?(<\/div>\s*<\/main>)/, `$1\n${items}\n$2`);
+            const iw = await ih.createWritable(); await iw.write(newIc); await iw.close();
+            await updateDemoIndex();
+        }
 
-            // Update writing/index.html
-            const indexHandle = await writingDirHandle.getFileHandle('index.html');
-            const indexFile = await indexHandle.getFile();
-            let content = await indexFile.text();
-            const itemsHtml = pub.map(p => `
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="./${p.slug}.html">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">${escapeHtml(p.metadata.title)}</h2>
-                            <span class="text-xs text-gray-400">${p.metadata.date}</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">${escapeHtml(p.metadata.excerpt)}</p>
-                    </a>
-                </div>`).join('\n');
-            const pattern = /(<div class="space-y-6" id="postList">)[\s\S]*?(<\/div>\s*<\/main>)/;
-            const newContent = content.replace(pattern, `$1\n${itemsHtml}\n$2`);
-            const iWritable = await indexHandle.createWritable();
-            await iWritable.write(newContent); await iWritable.close();
+        async function updateDemoIndex() {
+            if (!demoDirHandle) return;
+            const files = [];
+            const videoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv'];
+            const pdfExts = ['.pdf'];
+            for await (const e of demoDirHandle.values()) {
+                if (e.name === 'index.html' || e.name.startsWith('.')) continue;
+                const ext = '.' + e.name.split('.').pop().toLowerCase();
+                let type = 'other';
+                if (videoExts.includes(ext)) type = 'video';
+                else if (pdfExts.includes(ext)) type = 'pdf';
+                const title = e.name.replace(new RegExp(ext + '$', 'i'), '').replace(/^[\d]+\-/, '').replace(/[-_]/g, ' ');
+                files.push({ name: e.name, title, type, ext });
+            }
+            files.sort((a,b) => a.name.localeCompare(b.name));
+            const ih = await demoDirHandle.getFileHandle('index.html');
+            let c = await (await ih.getFile()).text();
+            const items = files.map(f => {
+                let buttonHtml, previewHtml = '';
+                if (f.type === 'pdf') buttonHtml = `<a href="./${f.name}" target="_blank" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">查看 PDF</a>`;
+                else if (f.type === 'video') {
+                    buttonHtml = `<a href="./${f.name}" target="_blank" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600">播放视频</a>`;
+                    previewHtml = `<div class="mt-4"><video controls class="w-full rounded-lg max-h-64 object-contain bg-gray-900" preload="metadata"><source src="./${f.name}">您的浏览器不支持视频播放</video></div>`;
+                } else buttonHtml = `<a href="./${f.name}" target="_blank" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600">下载文件</a>`;
+                return `<div class="demo-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm fade-in"><div class="flex items-center justify-between"><div><h2 class="text-xl font-medium text-gray-800 mb-1">${escapeHtml(f.title)}</h2><p class="text-sm text-gray-500">${f.name}</p></div>${buttonHtml}</div>${previewHtml}</div>`;
+            }).join('\n');
+            const nc = c.replace(/(<div class="space-y-4" id="demoList">)[\s\S]*?(<\/div>\s*<\/main>)/, `$1\n${items}\n$2`);
+            const w = await ih.createWritable(); await w.write(nc); await w.close();
         }
 
         const switchTab = t => {
@@ -336,13 +356,12 @@
                 $(`tab${i}`).className = i.toLowerCase() === t ? 'flex-1 py-3 text-sm font-medium tab-active' : 'flex-1 py-3 text-sm font-medium';
                 $(`panel${i}`).classList.toggle('hidden', i.toLowerCase() !== t);
             });
-            if (t === 'profile' && rootDirHandle) loadProfile();
-            if (t === 'demos' && rootDirHandle) loadDemos();
+            if (t === 'profile' && rootDirHandle) loadProfile(); if (t === 'demos' && rootDirHandle) loadDemos();
         };
 
         async function loadDemos() {
             if (!demoDirHandle) return;
-            const files = []; for await (const e of demoDirHandle.values()) if (e.name !== 'index.html') files.push(e.name);
+            const files = []; for await (const e of demoDirHandle.values()) if (e.kind === 'file' && e.name !== 'index.html' && !e.name.startsWith('.')) files.push(e.name);
             $('demoFilesList').innerHTML = files.sort().map(f => `<div class="flex justify-between p-2 text-sm border-b hover:bg-gray-50"><span>${f}</span><button class="text-red-400 hover:text-red-600" onclick="window.dispatchEvent(new CustomEvent('del-demo',{detail:'${f}'}))">删除</button></div>`).join('');
         }
 
@@ -353,12 +372,10 @@
                 $('profileName').value = c.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1].trim() || '';
                 $('profileTitle').value = c.match(/<p class="text-gray-500 font-light">([\s\S]*?)<\/p>/)?.[1].trim() || '';
                 $('profileContent').value = c.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>/)?.[1].trim() || '';
-                
-                const skills = [];
-                const skillMatch = c.match(/<div class="flex flex-wrap gap-2">([\s\S]*?)<\/div>/)?.[1] || '';
-                const skillRegex = /<span[^>]*>([^<]+)<\/span>/g;
-                let m; while(m = skillRegex.exec(skillMatch)) skills.push(m[1].trim());
+                const skills = []; const skillMatch = c.match(/<div class="flex flex-wrap gap-2">([\s\S]*?)<\/div>/)?.[1] || '';
+                const skillRegex = /<span[^>]*>([^<]+)<\/span>/g; let m; while(m = skillRegex.exec(skillMatch)) skills.push(m[1].trim());
                 $('profileSkills').value = skills.join(', ');
+                $('profileStatus').textContent = '个人简介加载成功';
             } catch (e) { console.error(e); }
         }
 
@@ -368,35 +385,25 @@
                 const pDir = await rootDirHandle.getDirectoryHandle('profile');
                 const h = await pDir.getFileHandle('index.html');
                 let c = await (await h.getFile()).text();
-                c = c.replace(/(<h1[^>]*>)[\s\S]*?(<\/h1>)/, `$1${name}$2`)
-                     .replace(/(<p class="text-gray-500 font-light">)[\s\S]*?(<\/p>)/, `$1${title}$2`)
-                     .replace(/(<div class="text-gray-600 space-y-4 leading-relaxed">)[\s\S]*?(<\/div>)/, `$1\n${about}\n$2`);
+                c = c.replace(/(<h1[^>]*>)[\s\S]*?(<\/h1>)/, `$1${name}$2`).replace(/(<p class="text-gray-500 font-light">)[\s\S]*?(<\/p>)/, `$1${title}$2`).replace(/(<div class="text-gray-600 space-y-4 leading-relaxed">)[\s\S]*?(<\/div>)/, `$1\n${about}\n$2`);
                 const sHtml = skills.map(s => `<span class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-600">${s}</span>`).join('\n');
                 c = c.replace(/(<div class="flex flex-wrap gap-2">)[\s\S]*?(<\/div>)/, `$1\n${sHtml}\n$2`);
                 const w = await h.createWritable(); await w.write(c); await w.close();
-                $('profileStatus').textContent = '✓ 已保存';
-                alert('简介保存成功');
+                $('profileStatus').textContent = '✓ 已保存'; alert('简介保存成功');
             } catch (e) { alert('保存失败: ' + e.message); }
         }
 
         async function gitAction(action) {
             const btn = action === 'commit' ? $('btnGitCommit') : $('btnGitPush');
-            const originalText = btn.textContent;
-            btn.disabled = true; btn.textContent = '执行中...';
+            const ot = btn.textContent; btn.disabled = true; btn.textContent = '执行中...';
             try {
-                const response = await fetch('/git-sync', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, message: action === 'commit' ? `Admin update: ${currentNote?.metadata?.title || 'site content'}` : '' })
-                });
+                const response = await fetch('/git-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, message: action === 'commit' ? `Admin update: ${currentNote?.metadata?.title || 'site content'}` : '' }) });
                 const result = await response.json();
                 if (result.success) alert(action === 'commit' ? '本地备份成功' : '远程推送成功');
                 else alert('Git 操作失败: ' + (result.error || '未知错误'));
-            } catch (e) { alert('无法连接服务器，请运行 node admin-server.js'); } finally { btn.disabled = false; btn.textContent = originalText; }
+            } catch (e) { alert('无法连接服务器，请运行 node admin-server.js'); } finally { btn.disabled = false; btn.textContent = ot; }
         }
 
-        // Bindings
-        $('btnSelectRoot').onclick = selectRootDir;
         $('tabNotes').onclick = () => switchTab('notes');
         $('tabDemos').onclick = () => switchTab('demos');
         $('tabProfile').onclick = () => switchTab('profile');
@@ -406,33 +413,13 @@
         $('btnGitCommit').onclick = () => gitAction('commit');
         $('btnGitPush').onclick = () => gitAction('push');
         $('btnSaveProfile').onclick = saveProfile;
-        $('btnDeleteNote').onclick = async () => {
-            if (!currentFileHandle || !confirm('确认删除?')) return;
-            await notesDirHandle.removeEntry(currentFileHandle.name);
-            currentNote = null; currentFileHandle = null;
-            $('currentNoteTitle').textContent = '未选择随笔';
-            $('editorContent').value = ''; $('editorContent').disabled = true;
-            loadNotesList();
-        };
-        $('btnNewNote').onclick = () => {
-            currentNote = null; currentFileHandle = null;
-            $('currentNoteTitle').textContent = '新建随笔';
-            $('metaTitle').value = ''; $('metaExcerpt').value = ''; $('editorContent').value = ''; $('editorContent').disabled = false;
-        };
-        $('btnAddDemo').onclick = async () => {
-            try {
-                const [h] = await window.showOpenFilePicker();
-                const f = await h.getFile();
-                const nh = await demoDirHandle.getFileHandle(f.name, {create:true});
-                const w = await nh.createWritable(); await w.write(f); await w.close();
-                loadDemos();
-            } catch (e) {}
-        };
+        $('btnDeleteNote').onclick = async () => { if (!currentFileHandle || !confirm('确认删除?')) return; await notesDirHandle.removeEntry(currentFileHandle.name); currentNote = null; currentFileHandle = null; $('currentNoteTitle').textContent = '未选择随笔'; $('editorContent').value = ''; $('editorContent').disabled = true; loadNotesList(); };
+        $('btnNewNote').onclick = () => { currentNote = null; currentFileHandle = null; $('currentNoteTitle').textContent = '新建随笔'; $('metaTitle').value = ''; $('metaExcerpt').value = ''; $('editorContent').value = ''; $('editorContent').disabled = false; };
+        $('btnAddDemo').onclick = async () => { try { const [h] = await window.showOpenFilePicker(); const f = await h.getFile(); const nh = await demoDirHandle.getFileHandle(f.name, {create:true}); const w = await nh.createWritable(); await w.write(f); await w.close(); loadDemos(); await updateDemoIndex(); } catch (e) {} };
         $('editorContent').oninput = updatePreview;
         $('searchInput').oninput = renderNotesList;
         window.addEventListener('open-note', e => openNote(e.detail));
-        window.addEventListener('del-demo', async e => { if(confirm(`删除 ${e.detail}?`)){ await demoDirHandle.removeEntry(e.detail); loadDemos(); } });
-
+        window.addEventListener('del-demo', async e => { if(confirm(`删除 ${e.detail}?`)){ await demoDirHandle.removeEntry(e.detail); loadDemos(); await updateDemoIndex(); } });
     </script>
 </body>
 </html>

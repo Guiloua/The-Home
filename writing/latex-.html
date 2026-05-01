@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX 公式测试 | 个人主页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
+        <a href="../index.html" class="text-xl font-medium text-gray-800">Me</a>
+        <div class="ml-auto flex items-center space-x-8">
+            <a href="../writing/index.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
+            <a href="../profile/index.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
+            <a href="../demo/index.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
+        </div>
+    </nav>
+    <article class="max-w-2xl mx-auto pt-24 pb-16 px-4">
+        <header class="mb-10 text-center">
+            <div class="text-sm text-gray-400 mb-3 font-light">2026-05-01</div>
+            <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">LaTeX 公式测试</h1>
+            <p class="text-gray-500 text-lg font-light">测试个人主页的 LaTeX 公式渲染效果，包括行内公式和块级公式。</p>
+        </header>
+        <div class="article-content text-gray-700 text-base leading-relaxed"><h1>LaTeX 渲染测试</h1>
+<p>这是一篇用于测试 KaTeX 渲染效果的随笔。</p>
+<h2>1. 行内公式 (Inline)</h2>
+<p>能量动量关系：$E^2 = (pc)^2 + (m_0c^2)^2$。</p>
+<p>勾股定理：$a^2 + b^2 = c^2$。</p>
+<h2>2. 块级公式 (Display)</h2>
+<p>麦克斯韦方程组（微分形式）：</p>
+<p>$
+\begin{cases}
+\nabla \cdot \mathbf{E} = \frac{\rho}{\varepsilon_0} \\
+\nabla \cdot \mathbf{B} = 0 \\
+\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t} \\
+\nabla \times \mathbf{B} = \mu_0\mathbf{J} + \mu_0\varepsilon_0\frac{\partial \mathbf{E}}{\partial t}
+\end{cases}
+$</p>
+<p>高斯积分：</p>
+<p>$ \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi} $</p>
+<h2>3. 复杂矩阵与对齐</h2>
+<p>$
+\mathbf{A} = \begin{pmatrix}
+a_{11} & a_{12} & \cdots & a_{1n} \\
+a_{21} & a_{22} & \cdots & a_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+a_{m1} & a_{m2} & \cdots & a_{mn}
+\end{pmatrix}
+$</p>
+<p>如果这些公式都能正常显示，说明配置成功！</p>
+</div>
+        <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400 flex justify-between">
+            <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
+            <span>#测试 #LaTeX</span>
+        </footer>
+    </article>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        });
+    </script>
+</body></html>

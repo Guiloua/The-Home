@@ -9,15 +9,7 @@
     <!-- KaTeX for LaTeX formulas -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {
-        delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\(', right: '\\)', display: false},
-            {left: '\\[', right: '\\]', display: true}
-        ],
-        throwOnError: false
-    });"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <!-- 导航栏 -->
@@ -84,36 +76,9 @@
             </header>
 
             <div class="space-y-6" id="postList">
-
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="./latex-.html">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">LaTeX 公式测试</h2>
-                            <span class="text-xs text-gray-400">2026-05-01</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">测试个人主页的 LaTeX 公式渲染效果，包括行内公式和块级公式。</p>
-                    </a>
-                </div>
-
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="./testing.html">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">testing</h2>
-                            <span class="text-xs text-gray-400">2026-05-01</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">测试本地管理页面是否能够正确管理和发布文件</p>
-                    </a>
-                </div>
-
-                <div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <a href="./hellow-world.html">
-                        <div class="flex items-center justify-between mb-2">
-                            <h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">Hellow world</h2>
-                            <span class="text-xs text-gray-400">2026-04-02</span>
-                        </div>
-                        <p class="text-gray-500 text-sm line-clamp-2">Neko tochs this world firstly</p>
-                    </a>
-                </div>
+<div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm"><a href="./testing.html"><div class="flex items-center justify-between mb-2"><h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">testing</h2><span class="text-xs text-gray-400">2026-05-01</span></div><p class="text-gray-500 text-sm line-clamp-2">测试本地管理页面是否能够正确管理和发布文件</p></a></div>
+<div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm"><a href="./latex-.html"><div class="flex items-center justify-between mb-2"><h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">LaTeX 公式测试</h2><span class="text-xs text-gray-400">2026-05-01</span></div><p class="text-gray-500 text-sm line-clamp-2">测试个人主页的 LaTeX 公式渲染效果，包括行内公式和块级公式。</p></a></div>
+<div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm"><a href="./hellow-world.html"><div class="flex items-center justify-between mb-2"><h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">Hellow world</h2><span class="text-xs text-gray-400">2026-04-02</span></div><p class="text-gray-500 text-sm line-clamp-2">Neko tochs this world firstly</p></a></div>
 </div>
     </main>
 
@@ -245,6 +210,18 @@
             if (searchInput.value.trim()) {
                 performSearch(searchInput.value);
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
         });
     </script>
 </body>
