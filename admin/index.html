@@ -25,6 +25,9 @@
             <div id="dirStatus" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">正在检查权限...</div>
         </div>
         <div class="flex items-center space-x-3">
+            <button id="btnGitCommit" class="px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md hover:bg-black disabled:opacity-50">Git 备份</button>
+            <button id="btnGitPush" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700 disabled:opacity-50">Git 推送</button>
+            <div class="h-6 w-px bg-gray-200"></div>
             <button id="btnSelectRoot" class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">连接项目目录</button>
             <button onclick="window.open('../index.html', '_blank')" class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">预览主页</button>
         </div>
@@ -97,16 +100,38 @@
         const POST_TEMPLATE = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8"><title>{title}</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} | 个人主页</title>
     <script src="https://cdn.tailwindcss.com"><\/script>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]})"><\/script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false},{left: '\\\\(', right: '\\\\)', display: false},{left: '\\\\[', right: '\\\\]', display: true}], throwOnError: false})"><\/script>
 </head>
-<body class="pt-24 px-4"><nav class="fixed top-0 left-0 right-0 bg-white/80 h-16 border-b flex items-center px-8"><a href="../index.html">Me</a></nav>
-<article class="max-w-2xl mx-auto"><header class="mb-10 text-center"><div class="text-sm text-gray-400">{date}</div><h1 class="text-3xl font-light">{title}</h1><p class="text-gray-500">{excerpt}</p></header>
-<div class="article-content">{content}</div><footer class="mt-12 pt-8 border-t text-sm text-gray-400 flex justify-between"><a href="../index.html">← 返回首页</a><span>{tagsHtml}</span></footer></article></body></html>`;
+<body>
+    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
+        <a href="../index.html" class="text-xl font-medium text-gray-800">Me</a>
+    </nav>
+    <main class="pt-24 pb-16 px-4">
+        <article class="max-w-2xl mx-auto">
+            <header class="mb-10 text-center">
+                <div class="text-sm text-gray-400 mb-3 font-light">{date}</div>
+                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">{title}</h1>
+                <p class="text-gray-500 text-lg font-light">{excerpt}</p>
+            </header>
+            <div class="article-content text-gray-700 text-base leading-relaxed">{content}</div>
+            <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400 flex justify-between">
+                <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
+                <span>{tagsHtml}</span>
+            </footer>
+        </article>
+    </main>
+    <script>
+        // Search functionality for post page
+        const searchInput = document.getElementById('searchInput');
+        // ... (can be added if needed, matching site-wide script)
+    <\/script>
+</body></html>`;
 
         // IndexedDB for handle persistence
         const DB_NAME = 'NekoChanAdmin';
@@ -279,6 +304,37 @@
             $('profileContent').value = c.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>/)?.[1].trim() || '';
         }
 
+        async function gitAction(action) {
+            const btn = action === 'commit' ? $('btnGitCommit') : $('btnGitPush');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '执行中...';
+            
+            try {
+                const response = await fetch('/git-sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action, 
+                        message: action === 'commit' ? `Admin update: ${currentNote?.metadata?.title || 'site content'}` : '' 
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(action === 'commit' ? '本地备份成功 (git commit)' : '远程推送成功 (git push)');
+                } else {
+                    alert('Git 操作失败: ' + (result.error || '未知错误'));
+                }
+            } catch (e) {
+                alert('无法连接到管理服务器，请确保已运行 node admin-server.js');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        $('btnGitCommit').onclick = () => gitAction('commit');
+        $('btnGitPush').onclick = () => gitAction('push');
         $('tabNotes').onclick = () => switchTab('notes');
         $('tabDemos').onclick = () => switchTab('demos');
         $('tabProfile').onclick = () => switchTab('profile');
