@@ -72,6 +72,25 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`管理服务器已启动: http://localhost:${PORT}`);
-    console.log(`访问管理页面: http://localhost:${PORT}/admin/index.html`);
+    const url = `http://localhost:${PORT}/admin/index.html`;
+    console.log(`管理服务器已启动: ${url}`);
+    
+    // 自动打开 Chrome 浏览器
+    let command;
+    if (process.platform === 'darwin') {
+        command = `open -a "Google Chrome" ${url}`;
+    } else if (process.platform === 'win32') {
+        command = `start chrome ${url}`;
+    } else {
+        command = `google-chrome ${url}`;
+    }
+    
+    exec(command, (err) => {
+        if (err) {
+            console.log("无法自动启动 Chrome，请手动访问。");
+            // 如果启动 Chrome 失败，尝试用默认方式打开
+            const fallback = (process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open');
+            exec(`${fallback} ${url}`);
+        }
+    });
 });
