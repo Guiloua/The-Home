@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 | NekoChan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="./admin.css?v=20260616.3">
+</head>
+<body class="bg-gray-50 flex flex-col">
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-20 shadow-sm">
+        <div class="flex items-center space-x-4">
+            <h1 class="font-semibold text-gray-800">管理后台</h1>
+            <div id="dirStatus" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">正在检查权限...</div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button id="btnGitCommit" class="px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md hover:bg-black disabled:opacity-50" disabled>Git 备份</button>
+            <button id="btnGitPush" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700 disabled:opacity-50" disabled>Git 推送</button>
+            <div class="h-6 w-px bg-gray-200"></div>
+            <button id="btnSelectRoot" class="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">连接项目目录</button>
+            <button id="btnPreviewHome" class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">预览主页</button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+            <nav class="flex border-b border-gray-200">
+                <button id="tabNotes" class="flex-1 py-3 text-sm font-medium">随笔</button>
+                <button id="tabDemos" class="flex-1 py-3 text-sm font-medium">Demo</button>
+                <button id="tabProfile" class="flex-1 py-3 text-sm font-medium">简介</button>
+            </nav>
+            <div class="flex-1 overflow-y-auto">
+                <div id="panelNotes" class="p-3 space-y-3">
+                    <input type="text" id="searchInput" placeholder="搜索随笔..." class="w-full px-3 py-2 border rounded-md text-sm focus:ring-1 focus:ring-blue-500 outline-none">
+                    <div class="flex space-x-2">
+                        <button id="btnNewNote" class="flex-1 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50" disabled>新建随笔</button>
+                        <button id="btnPublishAll" class="flex-1 py-2 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 disabled:opacity-50" disabled>全站同步</button>
+                    </div>
+                    <div id="notesList" class="space-y-1"></div>
+                </div>
+                <div id="panelDemos" class="hidden p-3 space-y-3">
+                    <button id="btnAddDemo" class="w-full py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50" disabled>添加 Demo 文件</button>
+                    <div id="demoFilesList" class="space-y-1"></div>
+                </div>
+                <div id="panelProfile" class="hidden p-4 space-y-4">
+                    <!-- Profile inputs unchanged -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">姓名</label>
+                        <input type="text" id="profileName" class="w-full px-3 py-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">头衔</label>
+                        <input type="text" id="profileTitle" class="w-full px-3 py-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">简介 (支持 HTML)</label>
+                        <textarea id="profileContent" class="w-full h-32 px-3 py-2 border rounded text-sm editor-textarea"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">技能 (逗号分隔)</label>
+                        <input type="text" id="profileSkills" class="w-full px-3 py-2 border rounded text-sm">
+                    </div>
+                    <button id="btnSaveProfile" class="w-full py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 shadow-sm">保存简介修改</button>
+                    <div id="profileStatus" class="text-center text-xs mt-2"></div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="editorArea" class="flex-1 flex flex-col bg-white">
+            <div class="h-14 border-b border-gray-200 flex items-center justify-between px-6">
+                <h2 id="currentNoteTitle" class="font-medium text-gray-700">未选择随笔</h2>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center space-x-2 text-sm cursor-pointer"><input type="checkbox" id="publishCheck"> <span>发布到网站</span></label>
+                    <button id="btnSaveNote" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded disabled:opacity-50" disabled>保存</button>
+                    <button id="btnPublishCurrent" class="px-4 py-1.5 bg-purple-500 text-white text-xs rounded disabled:opacity-50" disabled>发布</button>
+                    <button id="btnDeleteNote" class="px-4 py-1.5 bg-red-100 text-red-600 text-xs rounded disabled:opacity-50" disabled>删除</button>
+                </div>
+            </div>
+            <div id="metaArea" class="p-4 bg-gray-50 grid grid-cols-2 gap-4 border-b">
+                <input type="text" id="metaTitle" placeholder="文章标题" class="px-3 py-2 border rounded text-sm">
+                <input type="date" id="metaDate" class="px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaExcerpt" placeholder="摘要简介" class="col-span-2 px-3 py-2 border rounded text-sm">
+                <input type="text" id="metaTags" placeholder="标签 (逗号分隔)" class="col-span-2 px-3 py-2 border rounded text-sm">
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <textarea id="editorContent" class="w-1/2 p-6 border-r focus:outline-none editor-textarea" disabled placeholder="Markdown 内容..."></textarea>
+                <div id="previewArea" class="w-1/2 p-6 overflow-y-auto preview-content"></div>
+            </div>
+            <footer class="h-10 border-t border-gray-100 flex items-center px-4 justify-between bg-gray-50 text-[10px] text-gray-500">
+                <div id="saveStatus"></div>
+                <div id="publishStatus"></div>
+            </footer>
+        </main>
+    </div>
+
+    <script type="module" src="./admin.js?v=20260616.3"></script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LaTeX 公式测试 | 个人主页</title>
+    <title>LaTeX 公式测试 | NekoChan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/style.css">
     <!-- KaTeX for LaTeX formulas -->
@@ -18,12 +18,12 @@
             <div class="flex items-center justify-between h-16">
                 <!-- Logo -->
                 <div class="flex-shrink-0">
-                    <a href="../index.html" class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">Me</a>
+                    <a href="../home.html" class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">Me</a>
                 </div>
 
                 <!-- 导航菜单 -->
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="../writing/index.html" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">随笔</a>
+                    <a href="../writing/writing.html" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">随笔</a>
                     <a href="../profile/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">简介</a>
                     <a href="../demo/" class="nav-item text-gray-600 hover:text-gray-900 text-sm font-light transition-colors">Demo</a>
                 </div>
@@ -105,59 +105,12 @@
             <!-- 文章底部 -->
             <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">
                 <div class="flex items-center justify-between">
-                    <a href="../index.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
+                    <a href="../home.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
                     <span>#测试 #LaTeX</span>
                 </div>
             </footer>
         </article>
     </main>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            renderMathInElement(document.body, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                throwOnError: false
-            });
-        });
-
-        // 搜索功能相关脚本（从模板复制）
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        if (mobileMenuBtn && mobileMenu) {
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-        const searchContent = document.getElementById('searchContent');
-        let posts = [];
-        fetch('../search.json').then(r => r.json()).then(d => { posts = d; });
-        function performSearch(query) {
-            if (!query.trim()) { searchResults.classList.add('hidden'); return; }
-            const lowerQuery = query.toLowerCase();
-            const results = posts.filter(post => post.title.toLowerCase().includes(lowerQuery) || post.excerpt.toLowerCase().includes(lowerQuery));
-            displayResults(results, lowerQuery);
-        }
-        function displayResults(results, query) {
-            if (results.length === 0) {
-                searchContent.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">未找到相关内容</div>';
-            } else {
-                searchContent.innerHTML = results.map(post => `
-                    <a href="../${post.url}" class="block px-4 py-3 border-b border-gray-50">
-                        <div class="font-medium text-gray-800 text-sm mb-1">${post.title}</div>
-                        <div class="text-xs text-gray-500 line-clamp-1">${post.excerpt}</div>
-                    </a>
-                `).join('');
-            }
-            searchResults.classList.remove('hidden');
-        }
-        searchInput.addEventListener('input', () => performSearch(searchInput.value));
-    </script>
+    <script src="../js/site.js?v=20260616.1" defer></script>
 </body>
 </html>

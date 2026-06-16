@@ -4,12 +4,30 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const PORT = 8000;
+const ROOT_DIR = __dirname;
+const CONTENT_TYPES = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mov': 'video/quicktime',
+    '.py': 'text/plain; charset=utf-8',
+};
 
 const server = http.createServer((req, res) => {
     // 处理跨域 (CORS)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cache-Control', 'no-store');
 
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
@@ -18,20 +36,21 @@ const server = http.createServer((req, res) => {
     }
 
     // 静态文件服务
-    if (req.method === 'GET') {
-        let filePath = '.' + req.url;
-        if (filePath === './') filePath = './index.html';
-        
+    if (req.method === 'GET' || req.method === 'HEAD') {
+        const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        let pathname = decodeURIComponent(requestUrl.pathname);
+        if (pathname === '/') pathname = '/home.html';
+        if (pathname.endsWith('/')) pathname += 'index.html';
+
+        const filePath = path.normalize(path.join(ROOT_DIR, pathname));
+        if (!filePath.startsWith(ROOT_DIR + path.sep)) {
+            res.writeHead(403);
+            res.end('Forbidden');
+            return;
+        }
+
         const extname = path.extname(filePath);
-        const contentType = {
-            '.html': 'text/html',
-            '.js': 'text/javascript',
-            '.css': 'text/css',
-            '.json': 'application/json',
-            '.png': 'image/png',
-            '.jpg': 'image/jpg',
-            '.pdf': 'application/pdf',
-        }[extname] || 'text/plain';
+        const contentType = CONTENT_TYPES[extname] || 'text/plain; charset=utf-8';
 
         fs.readFile(filePath, (error, content) => {
             if (error) {
@@ -39,7 +58,7 @@ const server = http.createServer((req, res) => {
                 res.end('File not found');
             } else {
                 res.writeHead(200, { 'Content-Type': contentType });
-                res.end(content, 'utf-8');
+                res.end(req.method === 'HEAD' ? undefined : content, 'utf-8');
             }
         });
     }
@@ -72,8 +91,9 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-    const url = `http://localhost:${PORT}/admin/index.html`;
+    const url = `http://localhost:${PORT}/admin/admin.html`;
     console.log(`管理服务器已启动: ${url}`);
+    if (process.env.NO_AUTO_OPEN === '1') return;
     
     // 自动打开 Chrome 浏览器
     let command;
