@@ -1,7 +1,8 @@
 let rootDirHandle, notesDirHandle, writingDirHandle, demoDirHandle;
 let notesFiles = [], currentNote = null, currentFileHandle = null, currentTab = 'notes';
 let markedParser = null;
-const ADMIN_VERSION = '20260616.3';
+let backendMode = false;
+const ADMIN_VERSION = '20260627.3';
 window.NekoAdmin = { version: ADMIN_VERSION };
 
 const PATHS = Object.freeze({
@@ -19,6 +20,12 @@ const escapeAttr = escapeHtml;
 const slugify = t => t ? t.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim() : 'untitled';
 const setDisabled = (ids, disabled) => ids.forEach(id => { $(id).disabled = disabled; });
 const hasDirectoryPicker = () => typeof window.showDirectoryPicker === 'function';
+const apiJson = async (url, options = {}) => {
+    const response = await fetch(url, options);
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error || '请求失败');
+    return result;
+};
 
 import('https://cdn.jsdelivr.net/npm/marked@11/lib/marked.esm.js')
     .then(module => {
@@ -80,6 +87,7 @@ async function verifyPermission(handle) {
 }
 
 async function setupDirectories(handle) {
+    backendMode = false;
     rootDirHandle = handle;
     notesDirHandle = await rootDirHandle.getDirectoryHandle('notes', { create: true });
     writingDirHandle = await rootDirHandle.getDirectoryHandle('writing', { create: true });
@@ -103,6 +111,19 @@ async function selectRootDir() {
 }
 
 async function restoreSavedDirectory() {
+    try {
+        await apiJson('/api/notes');
+        backendMode = true;
+        $('dirStatus').textContent = '后端管理模式';
+        $('btnSelectRoot').disabled = true;
+        setDisabled(['btnNewNote', 'btnPublishAll', 'btnGitCommit', 'btnGitPush'], false);
+        $('btnAddDemo').disabled = true;
+        await loadNotesList();
+        return;
+    } catch (error) {
+        backendMode = false;
+    }
+
     if (!hasDirectoryPicker()) {
         $('dirStatus').textContent = '当前浏览器不支持目录连接';
         $('btnSelectRoot').disabled = true;
@@ -122,6 +143,18 @@ async function restoreSavedDirectory() {
 }
 
 async function loadNotesList() {
+    if (backendMode) {
+        const result = await apiJson('/api/notes');
+        notesFiles = result.notes.map(note => ({
+            ...note,
+            backend: true,
+            name: note.filename,
+            filename: note.filename,
+        }));
+        renderNotesList();
+        return;
+    }
+
     if (!notesDirHandle) return;
     notesFiles = [];
     for await (const entry of notesDirHandle.values()) {
@@ -159,6 +192,25 @@ function parseFrontmatter(c) {
 async function openNote(fn) {
     const n = notesFiles.find(i => i.filename === fn);
     if (!n) return;
+    if (backendMode || n.backend) {
+        const result = await apiJson(`/api/notes/${encodeURIComponent(fn)}`);
+        const { metadata, content } = result.note;
+        currentNote = { metadata, content, filename: fn };
+        currentFileHandle = { name: fn, backend: true };
+        $('currentNoteTitle').textContent = metadata.title || fn;
+        $('metaTitle').value = metadata.title;
+        $('metaDate').value = metadata.date;
+        $('metaExcerpt').value = metadata.excerpt;
+        $('metaTags').value = metadata.tags;
+        $('publishCheck').checked = !!metadata.publish;
+        $('editorContent').value = content;
+        $('editorContent').disabled = false;
+        setDisabled(['btnSaveNote', 'btnPublishCurrent', 'btnDeleteNote'], false);
+        updatePreview();
+        renderNotesList();
+        return;
+    }
+
     const file = await n.handle.getFile();
     const { metadata, body } = parseFrontmatter(await file.text());
     currentNote = { metadata, content: body, filename: fn }; currentFileHandle = n.handle;
@@ -213,19 +265,49 @@ const updatePreview = () => {
 };
 
 async function saveNote() {
-    if (!notesDirHandle) return;
     const meta = { title: $('metaTitle').value, date: $('metaDate').value, excerpt: $('metaExcerpt').value, tags: $('metaTags').value, publish: $('publishCheck').checked };
+
+    if (backendMode) {
+        const filename = currentFileHandle?.name || `${slugify(meta.title)}.md`;
+        const result = await apiJson('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename,
+                metadata: meta,
+                content: $('editorContent').value,
+            }),
+        });
+        currentFileHandle = { name: result.note.filename, backend: true };
+        currentNote = {
+            metadata: result.note.metadata,
+            content: result.note.content,
+            filename: result.note.filename,
+        };
+        $('saveStatus').textContent = '✓ 已保存 ' + result.note.filename;
+        await loadNotesList();
+        return result.note.filename;
+    }
+
+    if (!notesDirHandle) return;
     const text = '---\n' + Object.entries(meta).map(([k,v])=>`${k}: ${v}`).join('\n') + '\n---\n\n' + $('editorContent').value;
     const fn = currentFileHandle?.name || `${slugify(meta.title)}.md`;
     const h = currentFileHandle || await notesDirHandle.getFileHandle(fn, {create:true});
     const w = await h.createWritable(); await w.write(text); await w.close();
     $('saveStatus').textContent = '✓ 已保存 ' + fn;
     await loadNotesList(); if (!currentFileHandle) await openNote(fn);
+    return fn;
 }
 
 async function publishNote() {
-    await saveNote();
-    const slug = slugify($('metaTitle').value);
+    const savedFilename = await saveNote();
+    if (backendMode) {
+        await apiJson(`/api/publish-note/${encodeURIComponent(savedFilename)}`, { method: 'POST' });
+        alert('发布成功');
+        return;
+    }
+
+    const slug = currentFileHandle?.name?.replace(/\.md$/i, '') || slugify($('metaTitle').value);
     const html = POST_TEMPLATE.replace(/{title}/g, escapeHtml($('metaTitle').value)).replace(/{date}/g, $('metaDate').value).replace(/{excerpt}/g, escapeHtml($('metaExcerpt').value)).replace(/{content}/g, parseMarkdownWithLatex($('editorContent').value)).replace(/{tagsHtml}/g, ($('metaTags').value || '').split(',').map(t=>`#${t.trim()}`).join(' '));
     const w = await (await writingDirHandle.getFileHandle(`${slug}.html`, {create:true})).createWritable();
     await w.write(html); await w.close();
@@ -234,11 +316,17 @@ async function publishNote() {
 }
 
 async function syncIndexes() {
+    if (backendMode) {
+        await apiJson('/api/sync-indexes', { method: 'POST' });
+        $('publishStatus').textContent = '✓ 全站同步完成';
+        return;
+    }
+
     const pub = [];
     for await (const e of notesDirHandle.values()) {
         if (e.name.endsWith('.md')) {
             const { metadata } = parseFrontmatter(await (await e.getFile()).text());
-            if (metadata.publish) pub.push({ metadata, slug: slugify(metadata.title) });
+            if (metadata.publish) pub.push({ metadata, slug: e.name.replace(/\.md$/i, '') });
         }
     }
     pub.sort((a,b) => (b.metadata.date || '').localeCompare(a.metadata.date || ''));
@@ -251,6 +339,37 @@ async function syncIndexes() {
     const newIc = ic.replace(/(<div class="space-y-6" id="postList">)[\s\S]*?(<\/div>\s*<\/main>)/, `$1\n${items}\n$2`);
     const iw = await ih.createWritable(); await iw.write(newIc); await iw.close();
     await updateDemoIndex();
+}
+
+async function syncPublishedPages() {
+    const btn = $('btnSyncPublished');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '同步中...';
+    $('publishStatus').textContent = '';
+
+    try {
+        const response = await fetch('/api/sync-published-pages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ overwrite: false }),
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || '同步失败');
+
+        $('publishStatus').textContent = `已同步 ${result.synced} 个，跳过 ${result.skipped} 个`;
+        if (backendMode || notesDirHandle) {
+            await loadNotesList();
+        } else {
+            $('dirStatus').textContent = '已同步，请连接项目目录后管理';
+        }
+    } catch (error) {
+        $('publishStatus').textContent = '同步已发布失败';
+        alert('同步已发布失败: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = oldText;
+    }
 }
 
 async function updateDemoIndex() {
@@ -355,6 +474,18 @@ function resetEditorForNewNote() {
 
 async function deleteCurrentNote() {
     if (!currentFileHandle || !confirm('确认删除?')) return;
+    if (backendMode) {
+        await apiJson(`/api/notes/${encodeURIComponent(currentFileHandle.name)}`, { method: 'DELETE' });
+        currentNote = null;
+        currentFileHandle = null;
+        $('currentNoteTitle').textContent = '未选择随笔';
+        $('editorContent').value = '';
+        $('editorContent').disabled = true;
+        setDisabled(['btnSaveNote', 'btnPublishCurrent', 'btnDeleteNote'], true);
+        await loadNotesList();
+        return;
+    }
+
     await notesDirHandle.removeEntry(currentFileHandle.name);
     currentNote = null;
     currentFileHandle = null;
@@ -386,6 +517,7 @@ function bindEvents() {
     $('btnSaveNote').onclick = saveNote;
     $('btnPublishCurrent').onclick = publishNote;
     $('btnPublishAll').onclick = syncIndexes;
+    $('btnSyncPublished').onclick = syncPublishedPages;
     $('btnGitCommit').onclick = () => gitAction('commit');
     $('btnGitPush').onclick = () => gitAction('push');
     $('btnSaveProfile').onclick = saveProfile;

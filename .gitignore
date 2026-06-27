@@ -12,8 +12,12 @@ Thumbs.db
 # Node modules (if you add any later)
 node_modules/
 npm-debug.log
+.pnpm-store/
+.next/
+out/
+dist/
+.env*.local
+tsconfig.tsbuildinfo
 
 prompt.markdown
-notes/
 scripts/
-

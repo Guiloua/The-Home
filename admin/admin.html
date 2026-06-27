@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-    <link rel="stylesheet" href="./admin.css?v=20260616.3">
+    <link rel="stylesheet" href="./admin.css?v=20260627.3">
 </head>
 <body class="bg-gray-50 flex flex-col">
     <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-20 shadow-sm">
@@ -35,9 +35,10 @@
             <div class="flex-1 overflow-y-auto">
                 <div id="panelNotes" class="p-3 space-y-3">
                     <input type="text" id="searchInput" placeholder="搜索随笔..." class="w-full px-3 py-2 border rounded-md text-sm focus:ring-1 focus:ring-blue-500 outline-none">
-                    <div class="flex space-x-2">
-                        <button id="btnNewNote" class="flex-1 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50" disabled>新建随笔</button>
-                        <button id="btnPublishAll" class="flex-1 py-2 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 disabled:opacity-50" disabled>全站同步</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="btnNewNote" class="py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50" disabled>新建随笔</button>
+                        <button id="btnPublishAll" class="py-2 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 disabled:opacity-50" disabled>全站同步</button>
+                        <button id="btnSyncPublished" class="py-2 bg-amber-500 text-white text-xs rounded hover:bg-amber-600 disabled:opacity-50">同步已发布</button>
                     </div>
                     <div id="notesList" class="space-y-1"></div>
                 </div>
@@ -96,6 +97,6 @@
         </main>
     </div>
 
-    <script type="module" src="./admin.js?v=20260616.3"></script>
+    <script type="module" src="./admin.js?v=20260627.3"></script>
 </body>
 </html>
