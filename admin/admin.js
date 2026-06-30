@@ -2,7 +2,7 @@ let rootDirHandle, notesDirHandle, writingDirHandle, demoDirHandle;
 let notesFiles = [], currentNote = null, currentFileHandle = null, currentTab = 'notes';
 let markedParser = null;
 let backendMode = false;
-const ADMIN_VERSION = '20260627.3';
+const ADMIN_VERSION = '20260701.1';
 window.NekoAdmin = { version: ADMIN_VERSION };
 
 const PATHS = Object.freeze({
@@ -116,9 +116,10 @@ async function restoreSavedDirectory() {
         backendMode = true;
         $('dirStatus').textContent = '后端管理模式';
         $('btnSelectRoot').disabled = true;
-        setDisabled(['btnNewNote', 'btnPublishAll', 'btnGitCommit', 'btnGitPush'], false);
-        $('btnAddDemo').disabled = true;
+        setDisabled(['btnNewNote', 'btnPublishAll', 'btnAddDemo', 'btnGitCommit', 'btnGitPush'], false);
         await loadNotesList();
+        await loadDemos();
+        await loadProfile();
         return;
     } catch (error) {
         backendMode = false;
@@ -317,8 +318,15 @@ async function publishNote() {
 
 async function syncIndexes() {
     if (backendMode) {
-        await apiJson('/api/sync-indexes', { method: 'POST' });
-        $('publishStatus').textContent = '✓ 全站同步完成';
+        const result = await apiJson('/api/sync-site', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ build: true }),
+        });
+        $('publishStatus').textContent = `✓ 新版前端同步完成：${result.notes.length} 篇随笔，${result.demos.length} 个 Demo`;
+        await loadNotesList();
+        await loadDemos();
+        await loadProfile();
         return;
     }
 
@@ -373,6 +381,17 @@ async function syncPublishedPages() {
 }
 
 async function updateDemoIndex() {
+    if (backendMode) {
+        const result = await apiJson('/api/sync-demos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ overwrite: false }),
+        });
+        $('publishStatus').textContent = `Demo 已同步 ${result.synced} 个，跳过 ${result.skipped} 个`;
+        await loadDemos();
+        return;
+    }
+
     if (!demoDirHandle) return;
     const files = [];
     const videoExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv'];
@@ -408,16 +427,39 @@ const switchTab = t => {
         $(`tab${i}`).className = i.toLowerCase() === t ? 'flex-1 py-3 text-sm font-medium tab-active' : 'flex-1 py-3 text-sm font-medium';
         $(`panel${i}`).classList.toggle('hidden', i.toLowerCase() !== t);
     });
-    if (t === 'profile' && rootDirHandle) loadProfile(); if (t === 'demos' && rootDirHandle) loadDemos();
+    if (t === 'profile' && (backendMode || rootDirHandle)) loadProfile();
+    if (t === 'demos' && (backendMode || rootDirHandle)) loadDemos();
 };
 
 async function loadDemos() {
+    if (backendMode) {
+        const result = await apiJson('/api/demos');
+        $('demoFilesList').innerHTML = result.demos.map(f => `<div class="flex justify-between p-2 text-sm border-b hover:bg-gray-50"><span>${escapeHtml(f.name)} <span class="text-[10px] text-gray-400">(${escapeHtml(f.type)})</span></span><button class="text-red-400 hover:text-red-600" data-demo-name="${escapeAttr(f.name)}">删除</button></div>`).join('');
+        return;
+    }
+
             if (!demoDirHandle) return;
             const files = []; for await (const e of demoDirHandle.values()) if (e.kind === 'file' && !DEMO_INDEX_FILES.has(e.name) && !e.name.startsWith('.')) files.push(e.name);
             $('demoFilesList').innerHTML = files.sort().map(f => `<div class="flex justify-between p-2 text-sm border-b hover:bg-gray-50"><span>${escapeHtml(f)}</span><button class="text-red-400 hover:text-red-600" data-demo-name="${escapeAttr(f)}">删除</button></div>`).join('');
         }
 
 async function loadProfile() {
+    if (backendMode) {
+        try {
+            const result = await apiJson('/api/profile');
+            const profile = result.profile;
+            $('profileName').value = profile.name || '';
+            $('profileTitle').value = profile.title || '';
+            $('profileContent').value = (profile.about || []).join('\n\n');
+            $('profileSkills').value = (profile.skills || []).join(', ');
+            $('profileStatus').textContent = '个人简介加载成功';
+        } catch (e) {
+            $('profileStatus').textContent = '个人简介加载失败';
+            console.error(e);
+        }
+        return;
+    }
+
     try {
         const pDir = await rootDirHandle.getDirectoryHandle('profile');
                 const c = await (await (await pDir.getFileHandle(PATHS.profileIndex)).getFile()).text();
@@ -434,6 +476,26 @@ async function loadProfile() {
 async function saveProfile() {
     try {
         const name = $('profileName').value, title = $('profileTitle').value, about = $('profileContent').value, skills = $('profileSkills').value.split(',').map(s=>s.trim()).filter(s=>s);
+        if (backendMode) {
+            await apiJson('/api/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profile: {
+                        name,
+                        title,
+                        about: about.split(/\n{2,}|\n/).map(item => item.trim()).filter(Boolean),
+                        skills,
+                        avatar: '/photo/toma.jpg',
+                        background: '/photo/background.jpeg',
+                    },
+                }),
+            });
+            $('profileStatus').textContent = '✓ 已保存';
+            alert('简介保存成功');
+            return;
+        }
+
         const pDir = await rootDirHandle.getDirectoryHandle('profile');
                 const h = await pDir.getFileHandle(PATHS.profileIndex);
         let c = await (await h.getFile()).text();
@@ -500,6 +562,23 @@ async function addDemoFile() {
     try {
         const [h] = await window.showOpenFilePicker();
         const f = await h.getFile();
+        if (backendMode) {
+            const bytes = new Uint8Array(await f.arrayBuffer());
+            let binary = '';
+            bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+            await apiJson('/api/demos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: f.name,
+                    contentBase64: btoa(binary),
+                }),
+            });
+            await loadDemos();
+            $('publishStatus').textContent = '✓ Demo 已添加';
+            return;
+        }
+
         const nh = await demoDirHandle.getFileHandle(f.name, {create:true});
         const w = await nh.createWritable();
         await w.write(f);
@@ -533,6 +612,12 @@ function bindEvents() {
     $('demoFilesList').onclick = async e => {
         const button = e.target.closest('[data-demo-name]');
         if (!button || !confirm(`删除 ${button.dataset.demoName}?`)) return;
+        if (backendMode) {
+            await apiJson(`/api/demos/${encodeURIComponent(button.dataset.demoName)}`, { method: 'DELETE' });
+            await loadDemos();
+            $('publishStatus').textContent = '✓ Demo 已删除';
+            return;
+        }
         await demoDirHandle.removeEntry(button.dataset.demoName);
         await loadDemos();
         await updateDemoIndex();

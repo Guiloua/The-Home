@@ -7,6 +7,12 @@ const PORT = Number(process.env.PORT || 8000);
 const ROOT_DIR = __dirname;
 const NOTES_DIR = path.join(ROOT_DIR, 'notes');
 const WRITING_DIR = path.join(ROOT_DIR, 'writing');
+const DEMO_DIR = path.join(ROOT_DIR, 'demo');
+const PUBLIC_DEMO_DIR = path.join(ROOT_DIR, 'public', 'demo');
+const PROFILE_DIR = path.join(ROOT_DIR, 'profile');
+const PROFILE_HTML = path.join(PROFILE_DIR, 'profile.html');
+const CONTENT_DIR = path.join(ROOT_DIR, 'content');
+const PROFILE_DATA = path.join(CONTENT_DIR, 'profile.json');
 const SEARCH_INDEX = path.join(ROOT_DIR, 'search.json');
 const CONTENT_TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -24,6 +30,10 @@ const CONTENT_TYPES = {
     '.mov': 'video/quicktime',
     '.py': 'text/plain; charset=utf-8',
 };
+
+const VIDEO_EXTS = new Set(['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv']);
+const PDF_EXTS = new Set(['.pdf']);
+const CODE_EXTS = new Set(['.py', '.js', '.jsx', '.ts', '.tsx']);
 
 const jsonResponse = (res, status, payload) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -48,6 +58,27 @@ const decodeHtml = value => String(value || '')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'");
 
+const readRequestJson = req => new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+        if (body.length > 50 * 1024 * 1024) {
+            reject(new Error('请求体过大'));
+            req.destroy();
+        }
+    });
+    req.on('end', () => {
+        try {
+            resolve(body ? JSON.parse(body) : {});
+        } catch (error) {
+            reject(error);
+        }
+    });
+    req.on('error', reject);
+});
+
+const sanitizeAssetFilename = filename => path.basename(String(filename || '')).replace(/[^a-zA-Z0-9._-]/g, '-');
+
 const htmlToMarkdown = html => decodeHtml(String(html || '')
     .replace(/\r/g, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -71,7 +102,7 @@ const parsePublishedHtml = filePath => {
     const title = decodeHtml(stripTags(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || path.basename(filePath, '.html')).replace(/\s*\|\s*NekoChan\s*$/, ''));
     const date = decodeHtml(stripTags(html.match(/<header[\s\S]*?<div[^>]*class="[^"]*text-sm text-gray-400[^"]*"[^>]*>([\s\S]*?)<\/div>/i)?.[1] || ''));
     const excerpt = decodeHtml(stripTags(html.match(/<header[\s\S]*?<p[^>]*class="[^"]*text-gray-500[^"]*"[^>]*>([\s\S]*?)<\/p>/i)?.[1] || ''));
-    const contentHtml = html.match(/<div[^>]*class="[^"]*article-content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<footer/i)?.[1] || '';
+    const contentHtml = html.match(/<div[^>]*class="[^"]*article-content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<!--[\s\S]*?-->\s*)*<footer/i)?.[1] || '';
     const tagsText = decodeHtml(stripTags(html.match(/<footer[\s\S]*?<span>([\s\S]*?)<\/span>/i)?.[1] || ''));
     const tags = tagsText.split('#').map(tag => tag.trim()).filter(Boolean).join(', ');
 
@@ -331,6 +362,195 @@ const syncPublishedPages = ({ overwrite = false } = {}) => {
     return results;
 };
 
+const demoTypeFor = filename => {
+    const ext = path.extname(filename).toLowerCase();
+    if (VIDEO_EXTS.has(ext)) return 'video';
+    if (PDF_EXTS.has(ext)) return 'pdf';
+    if (CODE_EXTS.has(ext)) return 'code';
+    return 'file';
+};
+
+const demoTitleFor = filename => {
+    const ext = path.extname(filename);
+    return path.basename(filename, ext).replace(/^[\d]+-/, '').replace(/[-_]/g, ' ');
+};
+
+const listDemoFiles = () => {
+    fs.mkdirSync(PUBLIC_DEMO_DIR, { recursive: true });
+    return fs.readdirSync(PUBLIC_DEMO_DIR, { withFileTypes: true })
+        .filter(entry => entry.isFile() && !entry.name.startsWith('.'))
+        .map(entry => ({
+            name: entry.name,
+            title: demoTitleFor(entry.name),
+            type: demoTypeFor(entry.name),
+            href: `/demo/${entry.name}`,
+            size: fs.statSync(path.join(PUBLIC_DEMO_DIR, entry.name)).size,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+};
+
+const syncPublicDemosFromLegacy = ({ overwrite = false } = {}) => {
+    fs.mkdirSync(PUBLIC_DEMO_DIR, { recursive: true });
+    if (!fs.existsSync(DEMO_DIR)) return [];
+
+    return fs.readdirSync(DEMO_DIR, { withFileTypes: true })
+        .filter(entry => entry.isFile() && !entry.name.startsWith('.') && !['index.html', 'demo.html'].includes(entry.name))
+        .map(entry => {
+            const source = path.join(DEMO_DIR, entry.name);
+            const target = path.join(PUBLIC_DEMO_DIR, entry.name);
+            const exists = fs.existsSync(target);
+            if (!exists || overwrite) {
+                fs.copyFileSync(source, target);
+                return { name: entry.name, action: exists ? 'synced' : 'created' };
+            }
+            return { name: entry.name, action: 'skipped' };
+        });
+};
+
+const defaultProfile = {
+    name: 'Neko',
+    title: 'MaHoShaojyu',
+    avatar: '/photo/toma.jpg',
+    background: '/photo/background.jpeg',
+    about: ["saving world's neko chan", 'This is neko chan no secrete world!'],
+    skills: ['Fighting', 'Saving', 'Feeling'],
+};
+
+const normalizeTextArray = value => {
+    if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
+    return String(value || '').split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+};
+
+const parseProfileHtml = () => {
+    if (!fs.existsSync(PROFILE_HTML)) return defaultProfile;
+    const html = fs.readFileSync(PROFILE_HTML, 'utf8');
+    const name = decodeHtml(stripTags(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] || defaultProfile.name));
+    const title = decodeHtml(stripTags(html.match(/<p class="text-gray-500 font-light">([\s\S]*?)<\/p>/)?.[1] || defaultProfile.title));
+    const aboutHtml = html.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>/)?.[1] || '';
+    const aboutMatches = [...aboutHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(match => decodeHtml(stripTags(match[1])).trim()).filter(Boolean);
+    const skillHtml = html.match(/<div class="flex flex-wrap gap-2">([\s\S]*?)<\/div>/)?.[1] || '';
+    const skills = [...skillHtml.matchAll(/<span[^>]*>([^<]+)<\/span>/g)].map(match => decodeHtml(match[1]).trim()).filter(Boolean);
+
+    return {
+        ...defaultProfile,
+        name,
+        title,
+        about: aboutMatches.length ? aboutMatches : defaultProfile.about,
+        skills: skills.length ? skills : defaultProfile.skills,
+    };
+};
+
+const readProfile = () => {
+    fs.mkdirSync(CONTENT_DIR, { recursive: true });
+    if (!fs.existsSync(PROFILE_DATA)) {
+        const parsed = parseProfileHtml();
+        fs.writeFileSync(PROFILE_DATA, JSON.stringify(parsed, null, 2), 'utf8');
+        return parsed;
+    }
+
+    try {
+        const profile = JSON.parse(fs.readFileSync(PROFILE_DATA, 'utf8'));
+        return {
+            ...defaultProfile,
+            ...profile,
+            about: normalizeTextArray(profile.about).length ? normalizeTextArray(profile.about) : defaultProfile.about,
+            skills: normalizeTextArray(profile.skills).length ? normalizeTextArray(profile.skills) : defaultProfile.skills,
+        };
+    } catch {
+        return parseProfileHtml();
+    }
+};
+
+const renderProfileHtml = profile => `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简介 | NekoChan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
+        <a href="../home.html" class="text-xl font-medium text-gray-800">NekoChan</a>
+        <div class="ml-auto flex items-center space-x-8">
+            <a href="../writing/writing.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
+            <a href="../profile/profile.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
+            <a href="../demo/demo.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
+        </div>
+    </nav>
+    <main class="pt-24 pb-16 px-4">
+        <div class="max-w-2xl mx-auto">
+            <div class="text-center mb-10">
+                <img src="../photo/toma.jpg" alt="头像" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md mx-auto mb-6">
+                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-2">${escapeHtml(profile.name)}</h1>
+                <p class="text-gray-500 font-light">${escapeHtml(profile.title)}</p>
+            </div>
+            <div class="bg-white rounded-xl p-8 border border-gray-100 shadow-sm">
+                <h2 class="text-xl font-medium text-gray-800 mb-4">Who am I?</h2>
+                <div class="text-gray-600 space-y-4 leading-relaxed">
+${profile.about.map(item => `                    <p>${escapeHtml(item)}</p>`).join('\n')}
+                </div>
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">Skill</h3>
+                    <div class="flex flex-wrap gap-2">
+${profile.skills.map(skill => `                        <span class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-600">${escapeHtml(skill)}</span>`).join('\n')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>`;
+
+const writeProfile = payload => {
+    const profile = {
+        ...defaultProfile,
+        name: String(payload.name || defaultProfile.name).trim(),
+        title: String(payload.title || defaultProfile.title).trim(),
+        avatar: String(payload.avatar || defaultProfile.avatar).trim(),
+        background: String(payload.background || defaultProfile.background).trim(),
+        about: normalizeTextArray(payload.about),
+        skills: normalizeTextArray(payload.skills),
+    };
+    fs.mkdirSync(CONTENT_DIR, { recursive: true });
+    fs.mkdirSync(PROFILE_DIR, { recursive: true });
+    fs.writeFileSync(PROFILE_DATA, JSON.stringify(profile, null, 2), 'utf8');
+    fs.writeFileSync(PROFILE_HTML, renderProfileHtml(profile), 'utf8');
+    return profile;
+};
+
+const runCommand = command => new Promise(resolve => {
+    exec(command, { cwd: ROOT_DIR }, (error, stdout, stderr) => {
+        resolve({
+            success: !error,
+            output: stdout,
+            error: stderr || (error ? error.message : ''),
+        });
+    });
+});
+
+const syncNextSite = async ({ build = false } = {}) => {
+    const demoResults = syncPublicDemosFromLegacy({ overwrite: false });
+    const profile = readProfile();
+    syncWritingIndexFromNotes();
+
+    const result = {
+        demos: listDemoFiles(),
+        demoSynced: demoResults.filter(item => item.action === 'synced' || item.action === 'created').length,
+        demoSkipped: demoResults.filter(item => item.action === 'skipped').length,
+        profile,
+        notes: listNotes(),
+    };
+
+    if (build) {
+        result.build = await runCommand('CI=true pnpm build');
+        if (!result.build.success) throw new Error(result.build.error || 'Next 构建失败');
+    }
+
+    return result;
+};
+
 const server = http.createServer((req, res) => {
     // 处理跨域 (CORS)
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -418,6 +638,14 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (req.method === 'POST' && requestUrl.pathname === '/api/sync-site') {
+        readRequestJson(req)
+            .then(options => syncNextSite(options))
+            .then(result => jsonResponse(res, 200, { success: true, ...result }))
+            .catch(error => jsonResponse(res, 500, { success: false, error: error.message }));
+        return;
+    }
+
     if (req.method === 'GET' && requestUrl.pathname === '/api/published-pages') {
         jsonResponse(res, 200, { success: true, pages: listPublishedPages() });
         return;
@@ -440,6 +668,75 @@ const server = http.createServer((req, res) => {
                 jsonResponse(res, 500, { success: false, error: error.message });
             }
         });
+        return;
+    }
+
+    if (req.method === 'GET' && requestUrl.pathname === '/api/demos') {
+        try {
+            syncPublicDemosFromLegacy({ overwrite: false });
+            jsonResponse(res, 200, { success: true, demos: listDemoFiles() });
+        } catch (error) {
+            jsonResponse(res, 500, { success: false, error: error.message });
+        }
+        return;
+    }
+
+    if (req.method === 'POST' && requestUrl.pathname === '/api/sync-demos') {
+        readRequestJson(req)
+            .then(options => {
+                const results = syncPublicDemosFromLegacy(options);
+                jsonResponse(res, 200, {
+                    success: true,
+                    demos: listDemoFiles(),
+                    synced: results.filter(item => item.action === 'synced' || item.action === 'created').length,
+                    skipped: results.filter(item => item.action === 'skipped').length,
+                });
+            })
+            .catch(error => jsonResponse(res, 500, { success: false, error: error.message }));
+        return;
+    }
+
+    if (req.method === 'POST' && requestUrl.pathname === '/api/demos') {
+        readRequestJson(req)
+            .then(payload => {
+                const filename = sanitizeAssetFilename(payload.filename);
+                if (!filename) throw new Error('缺少文件名');
+                if (!payload.contentBase64) throw new Error('缺少文件内容');
+                fs.mkdirSync(PUBLIC_DEMO_DIR, { recursive: true });
+                fs.writeFileSync(path.join(PUBLIC_DEMO_DIR, filename), Buffer.from(payload.contentBase64, 'base64'));
+                jsonResponse(res, 200, { success: true, demos: listDemoFiles() });
+            })
+            .catch(error => jsonResponse(res, 500, { success: false, error: error.message }));
+        return;
+    }
+
+    if (req.method === 'DELETE' && requestUrl.pathname.startsWith('/api/demos/')) {
+        try {
+            const filename = sanitizeAssetFilename(decodeURIComponent(requestUrl.pathname.replace('/api/demos/', '')));
+            const filePath = path.join(PUBLIC_DEMO_DIR, filename);
+            if (filename && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            jsonResponse(res, 200, { success: true, demos: listDemoFiles() });
+        } catch (error) {
+            jsonResponse(res, 500, { success: false, error: error.message });
+        }
+        return;
+    }
+
+    if (req.method === 'GET' && requestUrl.pathname === '/api/profile') {
+        try {
+            jsonResponse(res, 200, { success: true, profile: readProfile() });
+        } catch (error) {
+            jsonResponse(res, 500, { success: false, error: error.message });
+        }
+        return;
+    }
+
+    if (req.method === 'POST' && requestUrl.pathname === '/api/profile') {
+        readRequestJson(req)
+            .then(payload => {
+                jsonResponse(res, 200, { success: true, profile: writeProfile(payload.profile || payload) });
+            })
+            .catch(error => jsonResponse(res, 500, { success: false, error: error.message }));
         return;
     }
 
