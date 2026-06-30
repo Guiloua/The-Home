@@ -9,6 +9,7 @@ const basePath = isProjectPage ? `/${repositoryName}` : '';
 const nextConfig = {
   output: 'export',
   basePath,
+  trailingSlash: true,
   images: {
     unoptimized: true,
   },
