@@ -2,16 +2,13 @@ let rootDirHandle, notesDirHandle, writingDirHandle, demoDirHandle;
 let notesFiles = [], currentNote = null, currentFileHandle = null, currentTab = 'notes';
 let markedParser = null;
 let backendMode = false;
-const ADMIN_VERSION = '20260701.1';
+const ADMIN_VERSION = '20260701.2';
 window.NekoAdmin = { version: ADMIN_VERSION };
 
 const PATHS = Object.freeze({
-    home: '../home.html',
-    writingIndex: 'writing.html',
-    profileIndex: 'profile.html',
-    demoIndex: 'demo.html',
+    home: '../index.html',
 });
-const DEMO_INDEX_FILES = new Set(['index.html', PATHS.demoIndex]);
+const DEMO_INDEX_FILES = new Set(['index.html', 'index.txt']);
 const ENABLE_AFTER_CONNECT = ['btnNewNote', 'btnPublishAll', 'btnAddDemo', 'btnGitCommit', 'btnGitPush'];
 
 const $ = id => document.getElementById(id);
@@ -36,41 +33,6 @@ import('https://cdn.jsdelivr.net/npm/marked@11/lib/marked.esm.js')
         console.warn('Markdown parser failed to load, using fallback renderer.', error);
     });
 
-const POST_TEMPLATE = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} | NekoChan</title>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
-</head>
-<body>
-    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
-<a href="../home.html" class="text-xl font-medium text-gray-800">Me</a>
-<div class="ml-auto flex items-center space-x-8">
-    <a href="../writing/writing.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
-    <a href="../profile/profile.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
-    <a href="../demo/demo.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
-</div>
-    </nav>
-    <article class="max-w-2xl mx-auto pt-24 pb-16 px-4">
-<header class="mb-10 text-center">
-    <div class="text-sm text-gray-400 mb-3 font-light">{date}</div>
-    <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">{title}</h1>
-    <p class="text-gray-500 text-lg font-light">{excerpt}</p>
-</header>
-<div class="article-content text-gray-700 text-base leading-relaxed">{content}</div>
-<footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400 flex justify-between">
-    <a href="../home.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
-    <span>{tagsHtml}</span>
-</footer>
-    </article>
-    <script src="../js/site.js?v=20260616.1" defer><\/script>
-</body></html>`;
-
 const DB_NAME = 'NekoChanAdmin';
 const STORE_NAME = 'Handles';
 const getDB = () => new Promise(r => {
@@ -91,7 +53,8 @@ async function setupDirectories(handle) {
     rootDirHandle = handle;
     notesDirHandle = await rootDirHandle.getDirectoryHandle('notes', { create: true });
     writingDirHandle = await rootDirHandle.getDirectoryHandle('writing', { create: true });
-    demoDirHandle = await rootDirHandle.getDirectoryHandle('demo', { create: true });
+    const publicDirHandle = await rootDirHandle.getDirectoryHandle('public', { create: true });
+    demoDirHandle = await publicDirHandle.getDirectoryHandle('demo', { create: true });
     $('dirStatus').textContent = '已连接: ' + rootDirHandle.name;
     setDisabled(ENABLE_AFTER_CONNECT, false);
     loadNotesList(); loadDemos(); loadProfile(); saveHandle(handle);
@@ -308,12 +271,8 @@ async function publishNote() {
         return;
     }
 
-    const slug = currentFileHandle?.name?.replace(/\.md$/i, '') || slugify($('metaTitle').value);
-    const html = POST_TEMPLATE.replace(/{title}/g, escapeHtml($('metaTitle').value)).replace(/{date}/g, $('metaDate').value).replace(/{excerpt}/g, escapeHtml($('metaExcerpt').value)).replace(/{content}/g, parseMarkdownWithLatex($('editorContent').value)).replace(/{tagsHtml}/g, ($('metaTags').value || '').split(',').map(t=>`#${t.trim()}`).join(' '));
-    const w = await (await writingDirHandle.getFileHandle(`${slug}.html`, {create:true})).createWritable();
-    await w.write(html); await w.close();
-    await syncIndexes();
-    alert('发布成功');
+    $('publishStatus').textContent = '目录模式已保存 Markdown；请运行后端管理模式执行新版前端同步';
+    alert('已保存随笔。发布构建请使用后端管理模式。');
 }
 
 async function syncIndexes() {
@@ -330,23 +289,7 @@ async function syncIndexes() {
         return;
     }
 
-    const pub = [];
-    for await (const e of notesDirHandle.values()) {
-        if (e.name.endsWith('.md')) {
-            const { metadata } = parseFrontmatter(await (await e.getFile()).text());
-            if (metadata.publish) pub.push({ metadata, slug: e.name.replace(/\.md$/i, '') });
-        }
-    }
-    pub.sort((a,b) => (b.metadata.date || '').localeCompare(a.metadata.date || ''));
-    const search = pub.map(p => ({ title: p.metadata.title, url: `./writing/${p.slug}.html`, excerpt: p.metadata.excerpt, date: p.metadata.date }));
-    const sw = await (await rootDirHandle.getFileHandle('search.json', {create:true})).createWritable();
-    await sw.write(JSON.stringify(search, null, 2)); await sw.close();
-            const ih = await writingDirHandle.getFileHandle(PATHS.writingIndex);
-    let ic = await (await ih.getFile()).text();
-    const items = pub.map(p => `<div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm"><a href="./${p.slug}.html"><div class="flex items-center justify-between mb-2"><h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">${escapeHtml(p.metadata.title)}</h2><span class="text-xs text-gray-400">${p.metadata.date}</span></div><p class="text-gray-500 text-sm line-clamp-2">${escapeHtml(p.metadata.excerpt)}</p></a></div>`).join('\n');
-    const newIc = ic.replace(/(<div class="space-y-6" id="postList">)[\s\S]*?(<\/div>\s*<\/main>)/, `$1\n${items}\n$2`);
-    const iw = await ih.createWritable(); await iw.write(newIc); await iw.close();
-    await updateDemoIndex();
+    $('publishStatus').textContent = '目录模式不再生成旧静态页；请运行后端管理模式同步新版前端';
 }
 
 async function syncPublishedPages() {
@@ -406,19 +349,7 @@ async function updateDemoIndex() {
         files.push({ name: e.name, title, type, ext });
     }
     files.sort((a,b) => a.name.localeCompare(b.name));
-            const ih = await demoDirHandle.getFileHandle(PATHS.demoIndex);
-    let c = await (await ih.getFile()).text();
-    const items = files.map(f => {
-        let buttonHtml, previewHtml = '';
-        if (f.type === 'pdf') buttonHtml = `<a href="./${f.name}" target="_blank" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">查看 PDF</a>`;
-        else if (f.type === 'video') {
-            buttonHtml = `<a href="./${f.name}" target="_blank" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600">播放视频</a>`;
-            previewHtml = `<div class="mt-4"><video controls class="w-full rounded-lg max-h-64 object-contain bg-gray-900" preload="metadata"><source src="./${f.name}">您的浏览器不支持视频播放</video></div>`;
-        } else buttonHtml = `<a href="./${f.name}" target="_blank" class="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600">下载文件</a>`;
-        return `<div class="demo-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm fade-in"><div class="flex items-center justify-between"><div><h2 class="text-xl font-medium text-gray-800 mb-1">${escapeHtml(f.title)}</h2><p class="text-sm text-gray-500">${f.name}</p></div>${buttonHtml}</div>${previewHtml}</div>`;
-    }).join('\n');
-    const nc = c.replace(/(<div class="space-y-4" id="demoList">)[\s\S]*?(<\/div>\s*<\/main>)/, `$1\n${items}\n$2`);
-    const w = await ih.createWritable(); await w.write(nc); await w.close();
+    $('publishStatus').textContent = `Demo 源文件已更新：${files.length} 个。构建请使用后端管理模式。`;
 }
 
 const switchTab = t => {
@@ -461,14 +392,13 @@ async function loadProfile() {
     }
 
     try {
-        const pDir = await rootDirHandle.getDirectoryHandle('profile');
-                const c = await (await (await pDir.getFileHandle(PATHS.profileIndex)).getFile()).text();
-        $('profileName').value = c.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1].trim() || '';
-        $('profileTitle').value = c.match(/<p class="text-gray-500 font-light">([\s\S]*?)<\/p>/)?.[1].trim() || '';
-        $('profileContent').value = c.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>/)?.[1].trim() || '';
-        const skills = []; const skillMatch = c.match(/<div class="flex flex-wrap gap-2">([\s\S]*?)<\/div>/)?.[1] || '';
-        const skillRegex = /<span[^>]*>([^<]+)<\/span>/g; let m; while(m = skillRegex.exec(skillMatch)) skills.push(m[1].trim());
-        $('profileSkills').value = skills.join(', ');
+        const contentDir = await rootDirHandle.getDirectoryHandle('content', { create: true });
+        const profileHandle = await contentDir.getFileHandle('profile.json');
+        const profile = JSON.parse(await (await profileHandle.getFile()).text());
+        $('profileName').value = profile.name || '';
+        $('profileTitle').value = profile.title || '';
+        $('profileContent').value = (profile.about || []).join('\n\n');
+        $('profileSkills').value = (profile.skills || []).join(', ');
         $('profileStatus').textContent = '个人简介加载成功';
     } catch (e) { console.error(e); }
 }
@@ -496,13 +426,17 @@ async function saveProfile() {
             return;
         }
 
-        const pDir = await rootDirHandle.getDirectoryHandle('profile');
-                const h = await pDir.getFileHandle(PATHS.profileIndex);
-        let c = await (await h.getFile()).text();
-        c = c.replace(/(<h1[^>]*>)[\s\S]*?(<\/h1>)/, `$1${name}$2`).replace(/(<p class="text-gray-500 font-light">)[\s\S]*?(<\/p>)/, `$1${title}$2`).replace(/(<div class="text-gray-600 space-y-4 leading-relaxed">)[\s\S]*?(<\/div>)/, `$1\n${about}\n$2`);
-        const sHtml = skills.map(s => `<span class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-600">${s}</span>`).join('\n');
-        c = c.replace(/(<div class="flex flex-wrap gap-2">)[\s\S]*?(<\/div>)/, `$1\n${sHtml}\n$2`);
-        const w = await h.createWritable(); await w.write(c); await w.close();
+        const contentDir = await rootDirHandle.getDirectoryHandle('content', { create: true });
+        const h = await contentDir.getFileHandle('profile.json', { create: true });
+        const profile = {
+            name,
+            title,
+            avatar: '/photo/toma.jpg',
+            background: '/photo/background.jpeg',
+            about: about.split(/\n{2,}|\n/).map(item => item.trim()).filter(Boolean),
+            skills,
+        };
+        const w = await h.createWritable(); await w.write(JSON.stringify(profile, null, 2)); await w.close();
         $('profileStatus').textContent = '✓ 已保存'; alert('简介保存成功');
     } catch (e) { alert('保存失败: ' + e.message); }
 }

@@ -9,11 +9,8 @@ const NOTES_DIR = path.join(ROOT_DIR, 'notes');
 const WRITING_DIR = path.join(ROOT_DIR, 'writing');
 const DEMO_DIR = path.join(ROOT_DIR, 'demo');
 const PUBLIC_DEMO_DIR = path.join(ROOT_DIR, 'public', 'demo');
-const PROFILE_DIR = path.join(ROOT_DIR, 'profile');
-const PROFILE_HTML = path.join(PROFILE_DIR, 'profile.html');
 const CONTENT_DIR = path.join(ROOT_DIR, 'content');
 const PROFILE_DATA = path.join(CONTENT_DIR, 'profile.json');
-const SEARCH_INDEX = path.join(ROOT_DIR, 'search.json');
 const CONTENT_TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
@@ -38,14 +35,6 @@ const CODE_EXTS = new Set(['.py', '.js', '.jsx', '.ts', '.tsx']);
 const jsonResponse = (res, status, payload) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(payload, null, 2));
-};
-
-const readJsonFile = filePath => {
-    try {
-        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    } catch {
-        return [];
-    }
 };
 
 const escapeMarkdownFrontmatter = value => String(value || '').replace(/\r?\n/g, ' ').trim();
@@ -193,173 +182,39 @@ const escapeHtml = value => String(value || '')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const markdownToHtml = markdown => String(markdown || '')
-    .split(/\n{2,}/)
-    .map(block => {
-        const escaped = escapeHtml(block).replace(/\n/g, '<br>');
-        if (block.startsWith('### ')) return `<h3>${escapeHtml(block.slice(4))}</h3>`;
-        if (block.startsWith('## ')) return `<h2>${escapeHtml(block.slice(3))}</h2>`;
-        if (block.startsWith('# ')) return `<h1>${escapeHtml(block.slice(2))}</h1>`;
-        return `<p>${escaped}</p>`;
-    })
-    .join('\n');
-
-const renderPostHtml = ({ metadata, body }) => {
-    const tagsHtml = String(metadata.tags || '').split(',').map(tag => tag.trim()).filter(Boolean).map(tag => `#${escapeHtml(tag)}`).join(' ');
-    return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(metadata.title)} | NekoChan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-</head>
-<body>
-    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
-        <a href="../home.html" class="text-xl font-medium text-gray-800">Me</a>
-        <div class="ml-auto flex items-center space-x-8">
-            <a href="../writing/writing.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
-            <a href="../profile/profile.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
-            <a href="../demo/demo.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
-        </div>
-    </nav>
-    <article class="max-w-2xl mx-auto pt-24 pb-16 px-4">
-        <header class="mb-10 text-center">
-            <div class="text-sm text-gray-400 mb-3 font-light">${escapeHtml(metadata.date)}</div>
-            <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-4 leading-tight">${escapeHtml(metadata.title)}</h1>
-            <p class="text-gray-500 text-lg font-light">${escapeHtml(metadata.excerpt)}</p>
-        </header>
-        <div class="article-content text-gray-700 text-base leading-relaxed">${markdownToHtml(body)}</div>
-        <footer class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400 flex justify-between">
-            <a href="../home.html" class="hover:text-gray-600 transition-colors">← 返回首页</a>
-            <span>${tagsHtml}</span>
-        </footer>
-    </article>
-    <script src="../js/site.js?v=20260616.1" defer></script>
-</body></html>`;
-};
-
 const syncWritingIndexFromNotes = () => {
-    const published = listNotes()
+    return listNotes()
         .filter(note => note.metadata.publish === true || note.metadata.publish === 'true')
         .map(note => ({
             metadata: note.metadata,
             slug: note.filename.replace(/\.md$/i, ''),
         }))
         .sort((a, b) => (b.metadata.date || '').localeCompare(a.metadata.date || ''));
-
-    const search = published.map(note => ({
-        title: note.metadata.title,
-        url: `./writing/${note.slug}.html`,
-        excerpt: note.metadata.excerpt,
-        date: note.metadata.date,
-    }));
-    fs.writeFileSync(SEARCH_INDEX, JSON.stringify(search, null, 2), 'utf8');
-
-    const writingIndex = path.join(WRITING_DIR, 'writing.html');
-    if (fs.existsSync(writingIndex)) {
-        const indexHtml = fs.readFileSync(writingIndex, 'utf8');
-        const items = published.map(note => `<div class="post-item bg-white rounded-xl p-6 border border-gray-100 shadow-sm"><a href="./${note.slug}.html"><div class="flex items-center justify-between mb-2"><h2 class="text-xl font-medium text-gray-800 hover:text-gray-600 transition-colors">${escapeHtml(note.metadata.title)}</h2><span class="text-xs text-gray-400">${escapeHtml(note.metadata.date)}</span></div><p class="text-gray-500 text-sm line-clamp-2">${escapeHtml(note.metadata.excerpt)}</p></a></div>`).join('\n');
-        fs.writeFileSync(writingIndex, indexHtml.replace(/(<div class="space-y-6" id="postList">)[\s\S]*?(<\/div>\s*<\/main>)/, `$1\n${items}\n$2`), 'utf8');
-    }
 };
 
 const publishNoteFile = filename => {
     const note = noteRecordFromFile(filename);
     const slug = note.filename.replace(/\.md$/i, '') || slugify(note.metadata.title);
-    fs.mkdirSync(WRITING_DIR, { recursive: true });
-    fs.writeFileSync(path.join(WRITING_DIR, `${slug}.html`), renderPostHtml({
-        metadata: note.metadata,
-        body: note.content,
-    }), 'utf8');
-    syncWritingIndexFromNotes();
-    return { ...note, slug, url: `./writing/${slug}.html` };
+    return { ...note, slug, url: `/writing/${slug}/` };
 };
 
 const listPublishedPages = () => {
-    const searchItems = readJsonFile(SEARCH_INDEX);
-    const byFile = new Map();
-
-    if (Array.isArray(searchItems)) {
-        searchItems.forEach(item => {
-            const relativeUrl = String(item.url || '').replace(/^\.\//, '');
-            if (!relativeUrl.startsWith('writing/') || !relativeUrl.endsWith('.html')) return;
-            byFile.set(path.basename(relativeUrl), {
-                title: item.title || '',
-                date: item.date || '',
-                excerpt: item.excerpt || '',
-                url: `./${relativeUrl}`,
-            });
-        });
-    }
-
-    if (fs.existsSync(WRITING_DIR)) {
-        fs.readdirSync(WRITING_DIR)
-            .filter(name => name.endsWith('.html') && !name.startsWith('.') && !['index.html', 'writing.html', 'post-template.html'].includes(name))
-            .forEach(name => {
-                if (!byFile.has(name)) byFile.set(name, { url: `./writing/${name}` });
-            });
-    }
-
-    return [...byFile.entries()].map(([filename, item]) => {
-        const htmlPath = path.join(WRITING_DIR, filename);
-        const notePath = path.join(NOTES_DIR, filename.replace(/\.html$/, '.md'));
-        const parsed = fs.existsSync(htmlPath) ? parsePublishedHtml(htmlPath) : {};
+    return listNotes().map(note => {
+        const slug = note.filename.replace(/\.md$/i, '');
         return {
-            filename,
-            noteFilename: path.basename(notePath),
-            url: item.url || `./writing/${filename}`,
-            title: item.title || parsed.title || filename.replace(/\.html$/, ''),
-            date: item.date || parsed.date || '',
-            excerpt: item.excerpt || parsed.excerpt || '',
-            hasNote: fs.existsSync(notePath),
+            filename: `${slug}/`,
+            noteFilename: note.filename,
+            url: `/writing/${slug}/`,
+            title: note.metadata.title || slug,
+            date: note.metadata.date || '',
+            excerpt: note.metadata.excerpt || '',
+            hasNote: true,
         };
     }).sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.title.localeCompare(b.title));
 };
 
 const syncPublishedPages = ({ overwrite = false } = {}) => {
-    fs.mkdirSync(NOTES_DIR, { recursive: true });
-    const results = [];
-
-    listPublishedPages().forEach(page => {
-        const htmlPath = path.join(WRITING_DIR, page.filename);
-        const notePath = path.join(NOTES_DIR, page.noteFilename);
-        if (!fs.existsSync(htmlPath)) return;
-        const noteExists = fs.existsSync(notePath);
-        if (noteExists && !overwrite) {
-            results.push({ ...page, action: 'skipped' });
-            return;
-        }
-
-        const parsed = parsePublishedHtml(htmlPath);
-        const metadata = {
-            title: page.title || parsed.title,
-            date: page.date || parsed.date,
-            excerpt: page.excerpt || parsed.excerpt,
-            tags: parsed.tags,
-            publish: true,
-        };
-        const markdown = [
-            '---',
-            `title: ${escapeMarkdownFrontmatter(metadata.title)}`,
-            `date: ${escapeMarkdownFrontmatter(metadata.date)}`,
-            `excerpt: ${escapeMarkdownFrontmatter(metadata.excerpt)}`,
-            `tags: ${escapeMarkdownFrontmatter(metadata.tags)}`,
-            `publish: ${metadata.publish}`,
-            '---',
-            '',
-            parsed.body || '',
-            '',
-        ].join('\n');
-
-        fs.writeFileSync(notePath, markdown, 'utf8');
-        results.push({ ...page, hasNote: true, action: noteExists ? 'synced' : 'created' });
-    });
-
-    return results;
+    return listPublishedPages().map(page => ({ ...page, action: overwrite ? 'synced' : 'skipped' }));
 };
 
 const demoTypeFor = filename => {
@@ -394,7 +249,7 @@ const syncPublicDemosFromLegacy = ({ overwrite = false } = {}) => {
     if (!fs.existsSync(DEMO_DIR)) return [];
 
     return fs.readdirSync(DEMO_DIR, { withFileTypes: true })
-        .filter(entry => entry.isFile() && !entry.name.startsWith('.') && !['index.html', 'demo.html'].includes(entry.name))
+        .filter(entry => entry.isFile() && !entry.name.startsWith('.') && !['index.html', 'index.txt'].includes(entry.name))
         .map(entry => {
             const source = path.join(DEMO_DIR, entry.name);
             const target = path.join(PUBLIC_DEMO_DIR, entry.name);
@@ -421,31 +276,11 @@ const normalizeTextArray = value => {
     return String(value || '').split(/\r?\n/).map(item => item.trim()).filter(Boolean);
 };
 
-const parseProfileHtml = () => {
-    if (!fs.existsSync(PROFILE_HTML)) return defaultProfile;
-    const html = fs.readFileSync(PROFILE_HTML, 'utf8');
-    const name = decodeHtml(stripTags(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] || defaultProfile.name));
-    const title = decodeHtml(stripTags(html.match(/<p class="text-gray-500 font-light">([\s\S]*?)<\/p>/)?.[1] || defaultProfile.title));
-    const aboutHtml = html.match(/<div class="text-gray-600 space-y-4 leading-relaxed">([\s\S]*?)<\/div>/)?.[1] || '';
-    const aboutMatches = [...aboutHtml.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(match => decodeHtml(stripTags(match[1])).trim()).filter(Boolean);
-    const skillHtml = html.match(/<div class="flex flex-wrap gap-2">([\s\S]*?)<\/div>/)?.[1] || '';
-    const skills = [...skillHtml.matchAll(/<span[^>]*>([^<]+)<\/span>/g)].map(match => decodeHtml(match[1]).trim()).filter(Boolean);
-
-    return {
-        ...defaultProfile,
-        name,
-        title,
-        about: aboutMatches.length ? aboutMatches : defaultProfile.about,
-        skills: skills.length ? skills : defaultProfile.skills,
-    };
-};
-
 const readProfile = () => {
     fs.mkdirSync(CONTENT_DIR, { recursive: true });
     if (!fs.existsSync(PROFILE_DATA)) {
-        const parsed = parseProfileHtml();
-        fs.writeFileSync(PROFILE_DATA, JSON.stringify(parsed, null, 2), 'utf8');
-        return parsed;
+        fs.writeFileSync(PROFILE_DATA, JSON.stringify(defaultProfile, null, 2), 'utf8');
+        return defaultProfile;
     }
 
     try {
@@ -457,51 +292,9 @@ const readProfile = () => {
             skills: normalizeTextArray(profile.skills).length ? normalizeTextArray(profile.skills) : defaultProfile.skills,
         };
     } catch {
-        return parseProfileHtml();
+        return defaultProfile;
     }
 };
-
-const renderProfileHtml = profile => `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>简介 | NekoChan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../css/style.css">
-</head>
-<body>
-    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 h-16 flex items-center px-8">
-        <a href="../home.html" class="text-xl font-medium text-gray-800">NekoChan</a>
-        <div class="ml-auto flex items-center space-x-8">
-            <a href="../writing/writing.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">随笔</a>
-            <a href="../profile/profile.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">简介</a>
-            <a href="../demo/demo.html" class="text-gray-600 hover:text-gray-900 text-sm font-light">Demo</a>
-        </div>
-    </nav>
-    <main class="pt-24 pb-16 px-4">
-        <div class="max-w-2xl mx-auto">
-            <div class="text-center mb-10">
-                <img src="../photo/toma.jpg" alt="头像" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md mx-auto mb-6">
-                <h1 class="text-3xl md:text-4xl font-light text-gray-800 mb-2">${escapeHtml(profile.name)}</h1>
-                <p class="text-gray-500 font-light">${escapeHtml(profile.title)}</p>
-            </div>
-            <div class="bg-white rounded-xl p-8 border border-gray-100 shadow-sm">
-                <h2 class="text-xl font-medium text-gray-800 mb-4">Who am I?</h2>
-                <div class="text-gray-600 space-y-4 leading-relaxed">
-${profile.about.map(item => `                    <p>${escapeHtml(item)}</p>`).join('\n')}
-                </div>
-                <div class="mt-8">
-                    <h3 class="text-lg font-medium text-gray-800 mb-3">Skill</h3>
-                    <div class="flex flex-wrap gap-2">
-${profile.skills.map(skill => `                        <span class="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-600">${escapeHtml(skill)}</span>`).join('\n')}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-</body>
-</html>`;
 
 const writeProfile = payload => {
     const profile = {
@@ -514,9 +307,7 @@ const writeProfile = payload => {
         skills: normalizeTextArray(payload.skills),
     };
     fs.mkdirSync(CONTENT_DIR, { recursive: true });
-    fs.mkdirSync(PROFILE_DIR, { recursive: true });
     fs.writeFileSync(PROFILE_DATA, JSON.stringify(profile, null, 2), 'utf8');
-    fs.writeFileSync(PROFILE_HTML, renderProfileHtml(profile), 'utf8');
     return profile;
 };
 
@@ -533,13 +324,14 @@ const runCommand = command => new Promise(resolve => {
 const syncNextSite = async ({ build = false } = {}) => {
     const demoResults = syncPublicDemosFromLegacy({ overwrite: false });
     const profile = readProfile();
-    syncWritingIndexFromNotes();
+    const published = syncWritingIndexFromNotes();
 
     const result = {
         demos: listDemoFiles(),
         demoSynced: demoResults.filter(item => item.action === 'synced' || item.action === 'created').length,
         demoSkipped: demoResults.filter(item => item.action === 'skipped').length,
         profile,
+        published,
         notes: listNotes(),
     };
 
@@ -743,7 +535,7 @@ const server = http.createServer((req, res) => {
     // 静态文件服务
     if (req.method === 'GET' || req.method === 'HEAD') {
         let pathname = decodeURIComponent(requestUrl.pathname);
-        if (pathname === '/') pathname = '/home.html';
+        if (pathname === '/') pathname = '/index.html';
         if (pathname.endsWith('/')) pathname += 'index.html';
 
         const filePath = path.normalize(path.join(ROOT_DIR, pathname));
