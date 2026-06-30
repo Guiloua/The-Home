@@ -2,7 +2,7 @@ let rootDirHandle, notesDirHandle, writingDirHandle, demoDirHandle;
 let notesFiles = [], currentNote = null, currentFileHandle = null, currentTab = 'notes';
 let markedParser = null;
 let backendMode = false;
-const ADMIN_VERSION = '20260701.2';
+const ADMIN_VERSION = '20260701.3';
 window.NekoAdmin = { version: ADMIN_VERSION };
 
 const PATHS = Object.freeze({
@@ -51,7 +51,7 @@ async function verifyPermission(handle) {
 async function setupDirectories(handle) {
     backendMode = false;
     rootDirHandle = handle;
-    notesDirHandle = await rootDirHandle.getDirectoryHandle('notes', { create: true });
+    notesDirHandle = await rootDirHandle.getDirectoryHandle('posts', { create: true });
     writingDirHandle = await rootDirHandle.getDirectoryHandle('writing', { create: true });
     const publicDirHandle = await rootDirHandle.getDirectoryHandle('public', { create: true });
     demoDirHandle = await publicDirHandle.getDirectoryHandle('demo', { create: true });
@@ -75,7 +75,7 @@ async function selectRootDir() {
 
 async function restoreSavedDirectory() {
     try {
-        await apiJson('/api/notes');
+        await apiJson('/api/posts');
         backendMode = true;
         $('dirStatus').textContent = '后端管理模式';
         $('btnSelectRoot').disabled = true;
@@ -108,8 +108,8 @@ async function restoreSavedDirectory() {
 
 async function loadNotesList() {
     if (backendMode) {
-        const result = await apiJson('/api/notes');
-        notesFiles = result.notes.map(note => ({
+        const result = await apiJson('/api/posts');
+        notesFiles = result.posts.map(note => ({
             ...note,
             backend: true,
             name: note.filename,
@@ -157,8 +157,8 @@ async function openNote(fn) {
     const n = notesFiles.find(i => i.filename === fn);
     if (!n) return;
     if (backendMode || n.backend) {
-        const result = await apiJson(`/api/notes/${encodeURIComponent(fn)}`);
-        const { metadata, content } = result.note;
+        const result = await apiJson(`/api/posts/${encodeURIComponent(fn)}`);
+        const { metadata, content } = result.post;
         currentNote = { metadata, content, filename: fn };
         currentFileHandle = { name: fn, backend: true };
         $('currentNoteTitle').textContent = metadata.title || fn;
@@ -233,7 +233,7 @@ async function saveNote() {
 
     if (backendMode) {
         const filename = currentFileHandle?.name || `${slugify(meta.title)}.md`;
-        const result = await apiJson('/api/notes', {
+        const result = await apiJson('/api/posts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -242,15 +242,15 @@ async function saveNote() {
                 content: $('editorContent').value,
             }),
         });
-        currentFileHandle = { name: result.note.filename, backend: true };
+        currentFileHandle = { name: result.post.filename, backend: true };
         currentNote = {
-            metadata: result.note.metadata,
-            content: result.note.content,
-            filename: result.note.filename,
+            metadata: result.post.metadata,
+            content: result.post.content,
+            filename: result.post.filename,
         };
-        $('saveStatus').textContent = '✓ 已保存 ' + result.note.filename;
+        $('saveStatus').textContent = '✓ 已保存 ' + result.post.filename;
         await loadNotesList();
-        return result.note.filename;
+        return result.post.filename;
     }
 
     if (!notesDirHandle) return;
@@ -471,7 +471,7 @@ function resetEditorForNewNote() {
 async function deleteCurrentNote() {
     if (!currentFileHandle || !confirm('确认删除?')) return;
     if (backendMode) {
-        await apiJson(`/api/notes/${encodeURIComponent(currentFileHandle.name)}`, { method: 'DELETE' });
+        await apiJson(`/api/posts/${encodeURIComponent(currentFileHandle.name)}`, { method: 'DELETE' });
         currentNote = null;
         currentFileHandle = null;
         $('currentNoteTitle').textContent = '未选择随笔';

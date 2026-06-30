@@ -2,7 +2,7 @@
 title: Testing
 date: 2026-06-27
 excerpt:
-tags: 
+tags:
 publish: true
 ---
 

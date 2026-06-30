@@ -15,6 +15,13 @@ export type Post = PostSummary & {
   content: string;
 };
 
+export type PostTreeNode = {
+  name: string;
+  path: string;
+  children: PostTreeNode[];
+  post?: PostSummary;
+};
+
 export type DemoItem = {
   name: string;
   title: string;

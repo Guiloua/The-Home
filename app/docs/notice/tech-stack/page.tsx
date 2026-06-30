@@ -19,7 +19,7 @@ const sections = [
   },
   {
     title: 'Markdown 与内容管理',
-    items: ['next-mdx-remote', 'gray-matter', 'lib/mdx', 'notes 目录'],
+    items: ['next-mdx-remote', 'gray-matter', 'lib/mdx', 'posts 目录'],
   },
   {
     title: '工具链',
@@ -67,8 +67,10 @@ export default function TechStackPage() {
             <h2 className="text-xl font-medium text-ink dark:text-zinc-100">总结</h2>
             <p className="mt-4 leading-8 text-zinc-700 dark:text-zinc-300">
               新前端把页面路由、内容读取、主题切换和样式系统拆到明确模块中。
-              文章继续由管理后台同步到 notes，再由 Next 服务端组件读取并渲染，
-              这样内容维护和页面展示共享同一套数据源。
+              文章继续由管理后台同步到 posts，gray-matter 读取标题、日期等
+              Frontmatter 元数据，next-mdx-remote 解析并渲染 MDX 内容。
+              自定义的 lib/mdx 模块负责读取文件、生成目录树，并统一封装
+              MDX 组件配置。
             </p>
           </section>
         </article>

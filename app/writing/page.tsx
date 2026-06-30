@@ -18,7 +18,7 @@ export default function WritingPage() {
         <header className="mb-10 text-center">
           <h1 className="text-4xl font-light text-ink dark:text-zinc-100">随笔</h1>
           <p className="mt-4 text-sm leading-7 text-muted">
-            文章内容来自 notes 目录，由 gray-matter 读取 Frontmatter，再经 MDX 渲染。
+            文章内容来自 posts 目录，由 gray-matter 读取 Frontmatter，再经 MDX 渲染。
           </p>
         </header>
 

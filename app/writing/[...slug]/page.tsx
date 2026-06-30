@@ -1,21 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { compileMDX } from 'next-mdx-remote/rsc';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
 import { SiteNav } from '@/components/site-nav';
-import { mdxComponents } from '@/components/mdx-components';
 import { badgeStyles } from '@/components/ui';
-import { getAllPosts, getPostBySlug } from '@/lib/mdx';
+import { compilePostMdx, getAllPosts, getPostBySlug } from '@/lib/mdx';
 
 type PostPageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string[] }>;
 };
 
 export function generateStaticParams() {
-  return getAllPosts().map((post) => ({ slug: post.slug }));
+  return getAllPosts().map((post) => ({ slug: post.slug.split('/') }));
 }
 
 export async function generateMetadata({
@@ -38,17 +33,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   if (!post || !post.publish) notFound();
 
-  const { content } = await compileMDX({
-    source: post.content,
-    components: mdxComponents,
-    options: {
-      parseFrontmatter: false,
-      mdxOptions: {
-        remarkPlugins: [remarkGfm, remarkMath],
-        rehypePlugins: [rehypeKatex],
-      },
-    },
-  });
+  const content = await compilePostMdx(post.content);
 
   return (
     <>

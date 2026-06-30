@@ -5,7 +5,7 @@ const { exec } = require('child_process');
 
 const PORT = Number(process.env.PORT || 8000);
 const ROOT_DIR = __dirname;
-const NOTES_DIR = path.join(ROOT_DIR, 'notes');
+const POSTS_DIR = path.join(ROOT_DIR, 'posts');
 const WRITING_DIR = path.join(ROOT_DIR, 'writing');
 const DEMO_DIR = path.join(ROOT_DIR, 'demo');
 const PUBLIC_DEMO_DIR = path.join(ROOT_DIR, 'public', 'demo');
@@ -134,7 +134,7 @@ const slugify = value => String(value || '')
     .replace(/\s+/g, '-')
     .trim() || 'untitled';
 
-const notePathFor = filename => path.join(NOTES_DIR, sanitizeNoteFilename(filename));
+const notePathFor = filename => path.join(POSTS_DIR, sanitizeNoteFilename(filename));
 
 const markdownFromNote = ({ metadata = {}, body = '' }) => [
     '---',
@@ -161,8 +161,8 @@ const noteRecordFromFile = filename => {
 };
 
 const listNotes = () => {
-    fs.mkdirSync(NOTES_DIR, { recursive: true });
-    return fs.readdirSync(NOTES_DIR)
+    fs.mkdirSync(POSTS_DIR, { recursive: true });
+    return fs.readdirSync(POSTS_DIR)
         .filter(name => name.endsWith('.md') && !name.startsWith('.'))
         .map(name => {
             const note = noteRecordFromFile(name);
@@ -326,13 +326,15 @@ const syncNextSite = async ({ build = false } = {}) => {
     const profile = readProfile();
     const published = syncWritingIndexFromNotes();
 
+    const posts = listNotes();
     const result = {
         demos: listDemoFiles(),
         demoSynced: demoResults.filter(item => item.action === 'synced' || item.action === 'created').length,
         demoSkipped: demoResults.filter(item => item.action === 'skipped').length,
         profile,
         published,
-        notes: listNotes(),
+        posts,
+        notes: posts,
     };
 
     if (build) {
@@ -357,27 +359,30 @@ const server = http.createServer((req, res) => {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const apiPath = requestUrl.pathname.replace(/^\/api\/notes(?=\/|$)/, '/api/posts');
 
-    if (req.method === 'GET' && requestUrl.pathname === '/api/notes') {
+    if (req.method === 'GET' && apiPath === '/api/posts') {
         try {
-            jsonResponse(res, 200, { success: true, notes: listNotes() });
+            const posts = listNotes();
+            jsonResponse(res, 200, { success: true, posts, notes: posts });
         } catch (error) {
             jsonResponse(res, 500, { success: false, error: error.message });
         }
         return;
     }
 
-    if (req.method === 'GET' && requestUrl.pathname.startsWith('/api/notes/')) {
+    if (req.method === 'GET' && apiPath.startsWith('/api/posts/')) {
         try {
-            const filename = decodeURIComponent(requestUrl.pathname.replace('/api/notes/', ''));
-            jsonResponse(res, 200, { success: true, note: noteRecordFromFile(filename) });
+            const filename = decodeURIComponent(apiPath.replace('/api/posts/', ''));
+            const post = noteRecordFromFile(filename);
+            jsonResponse(res, 200, { success: true, post, note: post });
         } catch (error) {
             jsonResponse(res, 404, { success: false, error: error.message });
         }
         return;
     }
 
-    if (req.method === 'POST' && requestUrl.pathname === '/api/notes') {
+    if (req.method === 'POST' && apiPath === '/api/posts') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
@@ -385,12 +390,13 @@ const server = http.createServer((req, res) => {
                 const payload = body ? JSON.parse(body) : {};
                 const metadata = payload.metadata || {};
                 const filename = sanitizeNoteFilename(payload.filename || `${slugify(metadata.title)}.md`);
-                fs.mkdirSync(NOTES_DIR, { recursive: true });
+                fs.mkdirSync(POSTS_DIR, { recursive: true });
                 fs.writeFileSync(notePathFor(filename), markdownFromNote({
                     metadata,
                     body: payload.content || '',
                 }), 'utf8');
-                jsonResponse(res, 200, { success: true, note: noteRecordFromFile(filename) });
+                const post = noteRecordFromFile(filename);
+                jsonResponse(res, 200, { success: true, post, note: post });
             } catch (error) {
                 jsonResponse(res, 500, { success: false, error: `保存失败：${error.message}` });
             }
@@ -398,9 +404,9 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    if (req.method === 'DELETE' && requestUrl.pathname.startsWith('/api/notes/')) {
+    if (req.method === 'DELETE' && apiPath.startsWith('/api/posts/')) {
         try {
-            const filename = decodeURIComponent(requestUrl.pathname.replace('/api/notes/', ''));
+            const filename = decodeURIComponent(apiPath.replace('/api/posts/', ''));
             const filePath = notePathFor(filename);
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
             jsonResponse(res, 200, { success: true });
