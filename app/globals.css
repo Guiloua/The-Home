@@ -60,3 +60,7 @@ body {
   overflow-y: hidden;
   padding: 0.5rem 0;
 }
+
+.article-content {
+  word-break: break-word;
+}

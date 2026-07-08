@@ -67,8 +67,8 @@ export default function TechStackPage() {
             <h2 className="text-xl font-medium text-ink dark:text-zinc-100">总结</h2>
             <p className="mt-4 leading-8 text-zinc-700 dark:text-zinc-300">
               新前端把页面路由、内容读取、主题切换和样式系统拆到明确模块中。
-              文章继续由管理后台同步到 posts，gray-matter 读取标题、日期等
-              Frontmatter 元数据，next-mdx-remote 解析并渲染 MDX 内容。
+              文章直接来自 posts 目录，gray-matter 读取标题、日期等 Frontmatter
+              元数据，next-mdx-remote 解析并渲染 MDX 内容。
               自定义的 lib/mdx 模块负责读取文件、生成目录树，并统一封装
               MDX 组件配置。
             </p>

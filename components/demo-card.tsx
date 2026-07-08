@@ -13,13 +13,13 @@ export function DemoCard({ item }: { item: DemoItem }) {
     );
 
   return (
-    <article className="rounded-lg border border-line bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <article className="rounded-lg border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-lg font-medium text-ink dark:text-zinc-100">
             {item.title}
           </h2>
-          <p className="mt-1 text-sm text-muted">{item.name}</p>
+          <p className="mt-1 truncate text-sm text-muted">{item.name}</p>
         </div>
         <a
           className={buttonStyles({ tone: item.type === 'video' ? 'primary' : 'secondary' })}

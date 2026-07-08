@@ -25,7 +25,8 @@ export function SiteNav({ posts }: { posts: PostSummary[] }) {
       .filter(
         (post) =>
           post.title.toLowerCase().includes(keyword) ||
-          post.excerpt.toLowerCase().includes(keyword),
+          post.excerpt.toLowerCase().includes(keyword) ||
+          post.tags.some((tag) => tag.toLowerCase().includes(keyword)),
       )
       .slice(0, 6);
   }, [posts, query]);
@@ -97,7 +98,7 @@ export function SiteNav({ posts }: { posts: PostSummary[] }) {
       </div>
 
       {open && (
-        <div className="border-t border-line bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950 md:hidden">
+        <div className="border-t border-line bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:hidden">
           <nav className="mx-auto grid max-w-6xl gap-2">
             {navItems.map((item) => (
               <Link
@@ -110,6 +111,42 @@ export function SiteNav({ posts }: { posts: PostSummary[] }) {
               </Link>
             ))}
           </nav>
+          <div className="mx-auto mt-3 max-w-6xl">
+            <label className="flex items-center rounded-md border border-line bg-gray-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+              <Search className="size-4 text-muted" />
+              <input
+                aria-label="搜索随笔"
+                className="min-w-0 flex-1 bg-transparent pl-2 text-sm text-ink outline-none dark:text-zinc-100"
+                placeholder="搜索随笔..."
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </label>
+            {results.length > 0 && (
+              <div className="mt-2 rounded-lg border border-line bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
+                {results.map((post) => (
+                  <Link
+                    key={post.slug}
+                    href={post.url}
+                    className="block rounded-md px-3 py-2 transition hover:bg-gray-50 dark:hover:bg-zinc-900"
+                    onClick={() => {
+                      setQuery('');
+                      setOpen(false);
+                    }}
+                  >
+                    <div className="truncate text-sm font-medium text-ink dark:text-zinc-100">
+                      {post.title}
+                    </div>
+                    {post.excerpt && (
+                      <div className="mt-1 line-clamp-1 text-xs text-muted">
+                        {post.excerpt}
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>

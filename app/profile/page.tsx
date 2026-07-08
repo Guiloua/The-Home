@@ -43,7 +43,7 @@ export default function ProfilePage() {
           <p className="mt-2 text-muted">{profile.title}</p>
         </section>
 
-        <section className="relative mx-auto mt-10 max-w-2xl rounded-lg border border-line bg-white/92 p-8 shadow-soft dark:border-zinc-800 dark:bg-zinc-950/90">
+        <section className="relative mx-auto mt-10 max-w-2xl rounded-lg border border-line bg-white/92 p-6 shadow-soft dark:border-zinc-800 dark:bg-zinc-950/90 sm:p-8">
           <h2 className="text-xl font-medium text-ink dark:text-zinc-100">
             Who am I?
           </h2>

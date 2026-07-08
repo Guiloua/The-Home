@@ -29,8 +29,6 @@
 - `content/profile.json`：个人简介数据。
 - `public/photo/`：头像、背景图等公开图片资源。
 - `public/demo/`：Demo 页面使用的视频、PDF、代码等公开资源。
-- `admin/`：管理后台静态页面。
-- `admin-server.js`：本地管理后端和静态文件服务器。
 - `out/`：`pnpm build` 生成的静态导出目录。
 - `_next/`、`writing/`、`demo/`、`docs/`、`profile/`、`index.html`：同步到仓库根目录的静态页面，用于 GitHub Pages 直接展示。
 
@@ -169,16 +167,16 @@ rsync -a --delete --exclude='.DS_Store' out/404/ 404/
 rsync -a --exclude='.DS_Store' out/index.html out/index.txt out/404.html ./
 ```
 
-8. 用本地管理服务器检查静态结果：
+8. 用任意静态服务器检查导出结果，例如：
 
 ```bash
-PORT=8000 NO_AUTO_OPEN=1 node admin-server.js
+python3 -m http.server 8000
 ```
 
 打开：
 
 ```text
-http://localhost:8000/writing/
+http://localhost:8000/
 ```
 
 9. 提交并推送：
@@ -191,31 +189,6 @@ git push origin main
 
 推送后，GitHub Pages 会展示同步到仓库根目录的最新静态页面。
 
-## 使用管理后台发布文章
-
-本地管理后台由 `admin-server.js` 提供：
-
-```bash
-PORT=8000 node admin-server.js
-```
-
-打开：
-
-```text
-http://localhost:8000/admin/admin.html
-```
-
-管理后台目前负责：
-
-- 读取和保存 `posts/` 顶层 Markdown 文件。
-- 调用 `/api/posts` 管理文章。
-- 同步已发布文章列表。
-- 管理 `public/demo/` 中的 Demo 文件。
-- 管理 `content/profile.json` 中的个人简介。
-- 触发本地构建和 Git 操作。
-
-注意：`lib/mdx.ts` 支持递归读取 `posts` 下的多级目录；管理后台的文章编辑接口主要面向 `posts/*.md` 顶层文件。多级目录文章建议直接在编辑器中创建和维护。
-
 ## 常用命令
 
 ```bash
@@ -223,7 +196,7 @@ pnpm dev
 pnpm typecheck
 pnpm lint
 pnpm build
-PORT=8000 NO_AUTO_OPEN=1 node admin-server.js
+python3 -m http.server 8000
 ```
 
 ## 发布检查清单
