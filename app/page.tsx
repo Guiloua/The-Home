@@ -25,7 +25,7 @@ export default function HomePage() {
             fill
             priority
             sizes="100vw"
-            className="object-cover"
+            className="object-cover object-[center_38%] sm:object-[center_42%]"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/28 to-black/64" />
           <div className="relative z-10 mx-auto flex min-h-[calc(92vh-4rem)] max-w-6xl flex-col justify-end px-4 pb-14 sm:px-6 lg:px-8">
